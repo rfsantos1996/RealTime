@@ -1,14 +1,17 @@
 package com.jabyftw.realtime;
 
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class RealTime extends JavaPlugin {
     int updateTime = 1;
     int calcTime = 20;
-    static String enabledWorld = "world";
+    //List enabledWorlds;
+    World currentWorld = null;
     static int calculatedTime = 0;
     boolean debug = false;
     int fixTimeInTicks = 0;
@@ -37,7 +40,7 @@ public class RealTime extends JavaPlugin {
         FileConfiguration config = getConfig();
         config.addDefault("config.updateTime", 1);
         config.addDefault("config.calcTime", 20);
-        config.addDefault("config.world", "world");
+        //config.addDefault("config.enabledWorlds", "world");
         config.addDefault("config.fixTimeInTicks", 0);
         config.addDefault("pvpTimeCompatibility.enabled", false);
         config.addDefault("pvpTimeCompatibility.startTime", 500);
@@ -50,7 +53,7 @@ public class RealTime extends JavaPlugin {
         reloadConfig();
         updateTime = config.getInt("config.updateTime");
         calcTime = config.getInt("config.calcTime");
-        enabledWorld = config.getString("config.world");
+        //enabledWorlds = config.getList("config.worlds");
         fixTimeInTicks = config.getInt("config.fixTimeInTicks");
         pvpTimeCompatibility = config.getBoolean("pvpTimeCompatibility.enabled");
         startTime = config.getInt("pvpTimeCompatibility.startTime");
@@ -91,7 +94,7 @@ public class RealTime extends JavaPlugin {
                     getLogger().log(Level.WARNING, "testingType cant be different than 1 or 2");
                 }
             } else {
-                calculatedTime = (int) ((getTimeSec(time) / 3.6) - 6000) + fixTimeInTicks;
+                calculatedTime = (int) ((getTimeSec(time) / 3.6) - 6000) + (fixTimeInTicks); // -1000 will work, I hope
             }
         }
         
@@ -113,31 +116,59 @@ public class RealTime extends JavaPlugin {
 
         @Override
         public void run() {
+            List enabledWorlds = getServer().getWorlds(); // This will make the same time in ALL worlds (I think)
+            // MultiWorld support planned! (?) I need internet to learn how to do this ._.
+           
             if(pvpTimeCompatibility) {
                 // 500 ticks PVP Time
                 if(calculatedTime > (startTime - 5) && calculatedTime < (startTime + 5)) {
-                    plugin.getServer().getWorld(enabledWorld).setTime(startTime + 4);
-                    resulted = startTime + 4;
+                 for (int x = 0; x < enabledWorlds.size(); x++) {
+                      currentWorld = (World) enabledWorlds.get(x);
+                      if (currentWorld instanceof World) {
+                            currentWorld.setFullTime(startTime + 4); // This will fix Moon phases changing randonly
+                            resulted = startTime + 4;
+                      }
+                 }
                     
                 // Normal DAY time
                 } else if (calculatedTime > (startTime + 6) && calculatedTime < (endTime - 6)) {
-                    plugin.getServer().getWorld(enabledWorld).setTime(calculatedTime);
-                    resulted = calculatedTime;
+                 for (int x = 0; x < enabledWorlds.size(); x++) {
+                      currentWorld = (World) enabledWorlds.get(x);
+                      if (currentWorld instanceof World) {
+                            currentWorld.setFullTime(calculatedTime);
+                            resulted = calculatedTime;
+                      }
+                 }
                     
                 // 12500 ticks PVP Time
                 } else if (calculatedTime > (endTime - 5) && calculatedTime < (endTime + 5)){
-                    plugin.getServer().getWorld(enabledWorld).setTime(endTime + 4);
-                    resulted = endTime + 4;
+                 for (int x = 0; x < enabledWorlds.size(); x++) {
+                      currentWorld = (World) enabledWorlds.get(x);
+                      if (currentWorld instanceof World) {
+                            currentWorld.setFullTime(endTime + 4);
+                            resulted = endTime + 4;
+                      }
+                 }
                     
                 // Normal NIGHT time
                 } else if (calculatedTime > (endTime + 6) && calculatedTime < (startTime -6)) {
-                    plugin.getServer().getWorld(enabledWorld).setTime(calculatedTime);
-                    resulted = calculatedTime;
-                    
+                 for (int x = 0; x < enabledWorlds.size(); x++) {
+                      currentWorld = (World) enabledWorlds.get(x);
+                      if (currentWorld instanceof World) {
+                            currentWorld.setFullTime(calculatedTime);
+                            resulted = calculatedTime;
+                      }
+                 }
                 }
             } else {
-                plugin.getServer().getWorld(enabledWorld).setTime(calculatedTime);
-                resulted = calculatedTime;
+                // Don't use pvpTimeCompatibility
+                 for (int x = 0; x < enabledWorlds.size(); x++) {
+                      currentWorld = (World) enabledWorlds.get(x);
+                      if (currentWorld instanceof World) {
+                            currentWorld.setFullTime(calculatedTime);
+                            resulted = calculatedTime;
+                      }
+                 }
             }
           if(debug)
               getLogger().info("Setted: " + resulted + " | Calced: " + calculatedTime + " | PVPTime: " + pvpTimeCompatibility);
