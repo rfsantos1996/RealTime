@@ -11,7 +11,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class RealTime extends JavaPlugin {
     int updateTime = 1;
     int calcTime = 20;
-    List<World> worldListWorld;
     static int calculatedTime = 0;
     boolean debug = false;
     int fixTimeInTicks = 0;
@@ -21,6 +20,9 @@ public class RealTime extends JavaPlugin {
     int resulted = 0;
     boolean testing = false;
     int testingType = 1;
+    List<World> enabledWorlds;
+    List<String> worldEnabledList;
+    //String worldExcludeString;
     
     @Override
     public void onEnable() {
@@ -40,7 +42,8 @@ public class RealTime extends JavaPlugin {
         FileConfiguration config = getConfig();
         config.addDefault("config.updateTime", 1);
         config.addDefault("config.calcTime", 20);
-        config.addDefault("config.enabledWorlds", "world");
+        //config.addDefault("config.excludeWorld", "world_nether");
+        config.addDefault("config.enabledWorlds", "world_nether");
         config.addDefault("config.fixTimeInTicks", 0);
         config.addDefault("pvpTimeCompatibility.enabled", false);
         config.addDefault("pvpTimeCompatibility.startTime", 500);
@@ -53,7 +56,8 @@ public class RealTime extends JavaPlugin {
         reloadConfig();
         updateTime = config.getInt("config.updateTime");
         calcTime = config.getInt("config.calcTime");
-        worldListWorld = transform(config.getList("worlds.worldList"));
+        //worldExcludeString = config.getString("worlds.excludeWorld");
+        worldEnabledList = (List<String>) config.getList("config.enabledWorlds");
         fixTimeInTicks = config.getInt("config.fixTimeInTicks");
         pvpTimeCompatibility = config.getBoolean("pvpTimeCompatibility.enabled");
         startTime = config.getInt("pvpTimeCompatibility.startTime");
@@ -61,13 +65,20 @@ public class RealTime extends JavaPlugin {
         debug = config.getBoolean("debug.enabled");
         testing = config.getBoolean("debug.testing");
         testingType = config.getInt("debug.testingType");
+        enabledWorlds = transform(worldEnabledList);
+       /* for(int x = 0; x < worldExcludeList.size(); x++) {
+            World worldX = getServer().getWorld(worldExcludeList.get(x));
+            if(enabledWorlds.contains(worldX)) {
+                enabledWorlds.remove(worldX);
+            }
+        } */
         getLogger().info("Configured!");
     }
     
     public List<World> transform(List<String> worldList) {
-        List worlds = new ArrayList();
-        for(String s : worldList) {
-            worlds.add(getServer().getWorld(s));
+        List<World> worlds = new ArrayList();
+        for(int x = 0; x < worldList.size(); x++) {//(String s : worldList) {
+            worlds.add(getServer().getWorld(worldList.get(x)));
         }
         return worlds;
     }
@@ -129,36 +140,36 @@ public class RealTime extends JavaPlugin {
             if(pvpTimeCompatibility) {
                 // 500 ticks PVP Time
                 if(calculatedTime > (startTime - 5) && calculatedTime < (startTime + 5)) {
-                 for (World s : worldListWorld) {
-                     s.setFullTime(startTime + 4);
+                 for (World w : enabledWorlds) {
+                     w.setFullTime(startTime + 4);
                      resulted = startTime + 4;
                  }
                     
                 // Normal DAY time
                 } else if (calculatedTime > (startTime + 6) && calculatedTime < (endTime - 6)) {
-                 for (World s : worldListWorld) {
-                     s.setFullTime(calculatedTime);
+                 for (World w : enabledWorlds) {
+                     w.setFullTime(calculatedTime);
                      resulted = calculatedTime;
                  }
                     
                 // 12500 ticks PVP Time
                 } else if (calculatedTime > (endTime - 5) && calculatedTime < (endTime + 5)){
-                 for (World s : worldListWorld) {
-                     s.setFullTime(endTime + 4);
+                 for (World w : enabledWorlds) {
+                     w.setFullTime(endTime + 4);
                      resulted = endTime + 4;
                  }
                     
                 // Normal NIGHT time
                 } else if (calculatedTime > (endTime + 6) && calculatedTime < (startTime -6)) {
-                 for (World s : worldListWorld) {
-                     s.setFullTime(calculatedTime);
+                 for (World w : enabledWorlds) {
+                     w.setFullTime(calculatedTime);
                      resulted = calculatedTime;
                  }
                 }
             } else {
                 // No pvpTimeCompatibility
-                 for (World s : worldListWorld) {
-                     s.setFullTime(calculatedTime);
+                 for (World w : enabledWorlds) {
+                     w.setFullTime(calculatedTime);
                      resulted = calculatedTime;
                  }
             }
