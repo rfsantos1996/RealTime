@@ -38,7 +38,7 @@ public class RealTime extends JavaPlugin {
         config.addDefault("config.updateTime", 1);
         config.addDefault("config.calculateTime", 20);
         config.addDefault("config.fixYourTimeInTicks", 0);
-        config.addDefault("config.enabledWorldsList", "world");
+        config.addDefault("config.enabledWorldsList", toString(getServer().getWorlds()));
         config.addDefault("pvpTime.enabled", false);
         config.addDefault("pvpTime.pvpStartTime", 500);
         config.addDefault("pvpTime.pvpEndTime", 12500);
@@ -53,14 +53,21 @@ public class RealTime extends JavaPlugin {
         pvpStart = config.getInt("pvpTime.pvpStartTime");
         pvpEnd = config.getInt("pvpTime.pvpEndTime");
         getLogger().info("Configured!");
-        enabledWorlds = transform(worldEnabledList);
+        enabledWorlds = toWorld(worldEnabledList);
         getLogger().info("Loaded WorldList!");
     }
     
-    public List<World> transform(List<String> worldList) {
+    public List<World> toWorld(List<String> worldList) {
         List<World> worlds = new ArrayList();
         for(int x = 0; x < worldList.size(); x++)
             worlds.add(getServer().getWorld(worldEnabledList.get(x)));
+        return worlds;
+    }
+    
+    public List<String> toString(List<World> worldList) {
+        List<String> worlds = new ArrayList();
+        for(int x = 0; x < worldList.size(); x++)
+            worlds.add(worldList.get(x).getName());
         return worlds;
     }
 }
