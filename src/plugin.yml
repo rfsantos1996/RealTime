@@ -1,5 +1,5 @@
 name: RealTime
-version: 0.4
+version: 1.0
 author: rfsantos1996
 main: com.jabyftw.realtime.RealTime
 description: Transform real time to Minecraft time!

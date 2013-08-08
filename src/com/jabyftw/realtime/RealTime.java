@@ -1,180 +1,66 @@
 package com.jabyftw.realtime;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class RealTime extends JavaPlugin {
-    int updateTime = 1;
-    int calcTime = 20;
-    static int calculatedTime = 0;
-    boolean debug = false;
-    int fixTimeInTicks = 0;
-    boolean pvpTimeCompatibility = false;
-    int startTime = 500;
-    int endTime = 12500;
-    int resulted = 0;
-    boolean testing = false;
-    int testingType = 1;
-    List<World> enabledWorlds;
+    public boolean pvpTime;
+    
+    public int pvpStart;
+    public int pvpEnd;
+    public int resultedTime;
+    public int timeFix;
+    int calcTime;
+    int updateTime;
+    
+    public List<World> enabledWorlds;
     List<String> worldEnabledList;
-    //String worldExcludeString;
     
     @Override
     public void onEnable() {
         setConfig();
-        getServer().getScheduler().scheduleAsyncRepeatingTask(this, new CalculateTime(this), calcTime, calcTime);
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, new SetTime(this), updateTime, updateTime);
-        getLogger().info("Registred tasks");
+        getServer().getScheduler().scheduleAsyncRepeatingTask(this, new CalculateTask(this), calcTime, calcTime);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, new SetTimeTask(this), updateTime, updateTime);
+        getLogger().info("Registred tasks, we are running!");
     }
     
     @Override
     public void onDisable() {
         getServer().getScheduler().cancelTasks(this);
-        getLogger().info("Unregistered tasks and closing");
+        getLogger().info("Unregistered tasks!");
     }
     
     void setConfig() {
         FileConfiguration config = getConfig();
         config.addDefault("config.updateTime", 1);
-        config.addDefault("config.calcTime", 20);
-        //config.addDefault("config.excludeWorld", "world_nether");
-        config.addDefault("config.enabledWorlds", "world_nether");
-        config.addDefault("config.fixTimeInTicks", 0);
-        config.addDefault("pvpTimeCompatibility.enabled", false);
-        config.addDefault("pvpTimeCompatibility.startTime", 500);
-        config.addDefault("pvpTimeCompatibility.endTime", 12500);
-        config.addDefault("debug.enabled", false);
-        config.addDefault("debug.testing", false);
-        config.addDefault("debug.testingType", 1);
+        config.addDefault("config.calculateTime", 20);
+        config.addDefault("config.fixYourTimeInTicks", 0);
+        config.addDefault("config.enabledWorldsList", "world");
+        config.addDefault("pvpTime.enabled", false);
+        config.addDefault("pvpTime.pvpStartTime", 500);
+        config.addDefault("pvpTime.pvpEndTime", 12500);
         config.options().copyDefaults(true);
         saveConfig();
         reloadConfig();
         updateTime = config.getInt("config.updateTime");
-        calcTime = config.getInt("config.calcTime");
-        //worldExcludeString = config.getString("worlds.excludeWorld");
-        worldEnabledList = (List<String>) config.getList("config.enabledWorlds");
-        fixTimeInTicks = config.getInt("config.fixTimeInTicks");
-        pvpTimeCompatibility = config.getBoolean("pvpTimeCompatibility.enabled");
-        startTime = config.getInt("pvpTimeCompatibility.startTime");
-        endTime = config.getInt("pvpTimeCompatibility.endTime");
-        debug = config.getBoolean("debug.enabled");
-        testing = config.getBoolean("debug.testing");
-        testingType = config.getInt("debug.testingType");
-        enabledWorlds = transform(worldEnabledList);
-       /* for(int x = 0; x < worldExcludeList.size(); x++) {
-            World worldX = getServer().getWorld(worldExcludeList.get(x));
-            if(enabledWorlds.contains(worldX)) {
-                enabledWorlds.remove(worldX);
-            }
-        } */
+        calcTime = config.getInt("config.calculateTime");
+        timeFix = config.getInt("config.fixYourTimeInTicks");
+        worldEnabledList = config.getStringList("config.enabledWorldsList"); // I'M TOTALLY DUMBASS!
+        pvpTime = config.getBoolean("pvpTime.enabled");
+        pvpStart = config.getInt("pvpTime.pvpStartTime");
+        pvpEnd = config.getInt("pvpTime.pvpEndTime");
         getLogger().info("Configured!");
+        enabledWorlds = transform(worldEnabledList);
+        getLogger().info("Loaded WorldList!");
     }
     
     public List<World> transform(List<String> worldList) {
         List<World> worlds = new ArrayList();
-        for(int x = 0; x < worldList.size(); x++) {//(String s : worldList) {
-            worlds.add(getServer().getWorld(worldList.get(x)));
-        }
+        for(int x = 0; x < worldList.size(); x++)
+            worlds.add(getServer().getWorld(worldEnabledList.get(x)));
         return worlds;
-    }
-    
-   /*
-    * RUNNABLES
-    */
-    
-    private class CalculateTime implements Runnable {
-        private final JavaPlugin plugin;
-        
-        public CalculateTime(JavaPlugin plugin) {
-            this.plugin = plugin;
-        }
-
-        @Override
-        public void run() {
-            calculateTime();
-        }
-
-        private void calculateTime() {
-            String time = new Date().toString().substring(11, 19);
-            
-            // (86400 / 3,6) - 6000
-            if(testing) {
-                if(testingType == 1) {
-                    calculatedTime = startTime -1;
-                } else if (testingType == 2) {
-                    calculatedTime = endTime - 2;
-                } else if (testingType != 1 && testingType != 2) {
-                    testingType = 1;
-                    getLogger().log(Level.WARNING, "testingType cant be different than 1 or 2");
-                }
-            } else {
-                calculatedTime = (int) ((getTimeSec(time) / 3.6) - 6000) + (fixTimeInTicks); // -1000 will work, I hope
-            }
-        }
-        
-        public float getTimeSec(String time) {
-            int hour = Integer.parseInt(time.substring(0, 2));
-            int min = Integer.parseInt(time.substring(3, 5));
-            int sec = Integer.parseInt(time.substring(6, 8));
-            
-            return (hour * 60 * 60) + (min * 60) + (sec);
-        }
-    }
-    
-    private class SetTime implements Runnable {
-        private final JavaPlugin plugin;
-       
-        public SetTime(JavaPlugin plugin) {    
-            this.plugin = plugin;
-        }
-
-        @Override
-        public void run() {
-            // MultiWorld support planned! (?) I need internet to learn how to do this ._.
-           
-            if(pvpTimeCompatibility) {
-                // 500 ticks PVP Time
-                if(calculatedTime > (startTime - 5) && calculatedTime < (startTime + 5)) {
-                 for (World w : enabledWorlds) {
-                     w.setFullTime(startTime + 4);
-                     resulted = startTime + 4;
-                 }
-                    
-                // Normal DAY time
-                } else if (calculatedTime > (startTime + 6) && calculatedTime < (endTime - 6)) {
-                 for (World w : enabledWorlds) {
-                     w.setFullTime(calculatedTime);
-                     resulted = calculatedTime;
-                 }
-                    
-                // 12500 ticks PVP Time
-                } else if (calculatedTime > (endTime - 5) && calculatedTime < (endTime + 5)){
-                 for (World w : enabledWorlds) {
-                     w.setFullTime(endTime + 4);
-                     resulted = endTime + 4;
-                 }
-                    
-                // Normal NIGHT time
-                } else if (calculatedTime > (endTime + 6) && calculatedTime < (startTime -6)) {
-                 for (World w : enabledWorlds) {
-                     w.setFullTime(calculatedTime);
-                     resulted = calculatedTime;
-                 }
-                }
-            } else {
-                // No pvpTimeCompatibility
-                 for (World w : enabledWorlds) {
-                     w.setFullTime(calculatedTime);
-                     resulted = calculatedTime;
-                 }
-            }
-          if(debug)
-              getLogger().info("Setted: " + resulted + " | Calced: " + calculatedTime + " | PVPTime: " + pvpTimeCompatibility);
-        }
     }
 }
