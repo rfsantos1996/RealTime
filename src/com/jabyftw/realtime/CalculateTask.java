@@ -22,7 +22,7 @@ public class CalculateTask implements Runnable {
     }
 
     private void calculateTime() {
-    String time = new Date().toString().substring(11, 19);
-    plugin.resultedTime = (int) ((getTimeSec(time) / 3.6) - 6000) + (plugin.timeFix);
+        String time = new Date().toString().substring(11, 19);
+        plugin.resultedTime = (int) ((getTimeSec(time) / 3.6) - 6000) + (plugin.timeFix);
     }
 }

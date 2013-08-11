@@ -28,9 +28,8 @@ public class SetTimeTask implements Runnable {
             else if (plugin.resultedTime > (plugin.pvpEnd + 6) && plugin.resultedTime < (plugin.pvpStart -6))
                 for (World w : plugin.enabledWorlds)
                     w.setFullTime(plugin.resultedTime);
-        } else {
+        } else
             for (World w : plugin.enabledWorlds)
                 w.setFullTime(plugin.resultedTime);
-        }
     }
 }
