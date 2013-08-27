@@ -8,11 +8,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class RealTime extends JavaPlugin {
     public boolean pvpTime;
+    public boolean debug;
     
     public int pvpStart;
     public int pvpEnd;
     public int resultedTime;
     public int timeFix;
+    /*public int timeH;
+    public int timeM;
+    public int timeS;*/
     int calcTime;
     int updateTime;
     
@@ -42,16 +46,33 @@ public class RealTime extends JavaPlugin {
         config.addDefault("pvpTime.enabled", false);
         config.addDefault("pvpTime.pvpStartTime", 500);
         config.addDefault("pvpTime.pvpEndTime", 12500);
+        config.addDefault("debug.enabled", false);
+        config.addDefault("debug.timeInHour", 0);
+        config.addDefault("debug.timeInMin", 0);
+        config.addDefault("debug.timeInSec", 0);
         config.options().copyDefaults(true);
         saveConfig();
         reloadConfig();
+        /*
+         * CONFIG GERAL
+         */
         updateTime = config.getInt("config.updateTime");
         calcTime = config.getInt("config.calculateTime");
         timeFix = config.getInt("config.fixYourTimeInTicks");
-        worldEnabledList = config.getStringList("config.enabledWorldsList"); // I'M TOTALLY DUMBASS!
+        worldEnabledList = config.getStringList("config.enabledWorldsList");
+        /* 
+         * PVP TIME
+         */
         pvpTime = config.getBoolean("pvpTime.enabled");
         pvpStart = config.getInt("pvpTime.pvpStartTime");
         pvpEnd = config.getInt("pvpTime.pvpEndTime");
+        /*
+         * DEBUG
+         */
+        debug = config.getBoolean("debug.enabled");
+        /*timeH = config.getInt("debug.timeInHour");
+        timeM = config.getInt("debug.timeInMin");
+        timeS = config.getInt("debug.timeInSec");*/
         getLogger().info("Configured!");
         enabledWorlds = toWorld(worldEnabledList);
         getLogger().info("Loaded WorldList!");
