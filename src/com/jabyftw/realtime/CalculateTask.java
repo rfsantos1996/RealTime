@@ -18,7 +18,7 @@ public class CalculateTask implements Runnable {
         int hour = Integer.parseInt(time.substring(0, 2));
         int min = Integer.parseInt(time.substring(3, 5));
         int sec = Integer.parseInt(time.substring(6, 8));
-        if(plugin.debug) {
+        if(plugin.debug && plugin.debugTime) {
             plugin.reloadConfig(); // maybe i wont need to reload everytime to work with this
             return (plugin.getConfig().getInt("debug.timeInHour") * 60 * 60) + (plugin.getConfig().getInt("debug.timeInMin") * 60) + plugin.getConfig().getInt("debug.timeInSec");
         }
