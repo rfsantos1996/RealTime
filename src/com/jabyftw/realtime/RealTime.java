@@ -6,12 +6,14 @@ import java.util.logging.Level;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 
 public class RealTime extends JavaPlugin {
-    public boolean pvpTime;
     public boolean debug;
     public boolean debugTime;
-    boolean usePlayerTime;
+    public boolean useMode36;
+    public boolean usePlayerTime;
+    public boolean usePVPTime;
     
     public int pvpStart;
     public int pvpEnd;
@@ -25,12 +27,18 @@ public class RealTime extends JavaPlugin {
     
     @Override
     public void onEnable() {
+        BukkitScheduler sche = getServer().getScheduler();
         setConfig();
-        getServer().getScheduler().scheduleAsyncRepeatingTask(this, new CalculateTask(this), calcTime, calcTime);
-        if(usePlayerTime)
-            getServer().getScheduler().scheduleSyncRepeatingTask(this, new SetPTimeTask(this), updateTime, updateTime);
-        else
-            getServer().getScheduler().scheduleSyncRepeatingTask(this, new SetTimeTask(this), updateTime, updateTime);
+        if(!useMode36) {
+            sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), calcTime, calcTime);
+            if(usePlayerTime)
+                sche.scheduleSyncRepeatingTask(this, new SetPTimeTask(this), updateTime, updateTime);
+            else
+                sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this), updateTime, updateTime);
+        } else if(useMode36) {
+            sche.runTaskAsynchronously(this, new CalculateTask(this));
+            sche.scheduleSyncRepeatingTask(this, new Mode36Task(this), 72, 72);
+        }
         getLogger().info("Registred tasks, we are enabled!");
     }
     
@@ -42,13 +50,15 @@ public class RealTime extends JavaPlugin {
     
     void setConfig() {
         FileConfiguration config = getConfig();
+        config.addDefault("config.useMode36", false);
+        config.addDefault("config.usePlayerTime", true);
+        config.addDefault("config.usePVPTimeCompatibility", false);
+        
         config.addDefault("config.updateTime", 60);
         config.addDefault("config.calculateTime", 30);
         config.addDefault("config.fixYourTimeInTicks", 0);
-        config.addDefault("config.usePlayerTimeInstead", true);
         config.addDefault("config.worldList", toString(getServer().getWorlds()));
         
-        config.addDefault("pvpTime.enabled", false);
         config.addDefault("pvpTime.pvpStartTime", 500);
         config.addDefault("pvpTime.pvpEndTime", 12500);
         
@@ -57,22 +67,25 @@ public class RealTime extends JavaPlugin {
         config.addDefault("debug.timeInHour", 0);
         config.addDefault("debug.timeInMin", 0);
         config.addDefault("debug.timeInSec", 0);
+        
         config.options().copyDefaults(true);
         saveConfig();
         reloadConfig();
         /*
          * CONFIG GERAL
          */
+        useMode36 = config.getBoolean("config.useMode36");
+        usePlayerTime = config.getBoolean("config.usePlayerTime");
+        usePVPTime = config.getBoolean("config.usePVPTimeCompatibility");
+        
         updateTime = config.getInt("config.updateTime");
         calcTime = config.getInt("config.calculateTime");
         timeFix = config.getInt("config.fixYourTimeInTicks");
-        usePlayerTime = config.getBoolean("config.usePlayerTimeInstead");
         worldList = config.getStringList("config.worldList");
         enabledWorlds = toWorld(worldList);
         /* 
          * PVP TIME
          */
-        pvpTime = config.getBoolean("pvpTime.enabled");
         pvpStart = config.getInt("pvpTime.pvpStartTime");
         pvpEnd = config.getInt("pvpTime.pvpEndTime");
         /*
@@ -80,18 +93,19 @@ public class RealTime extends JavaPlugin {
          */
         debug = config.getBoolean("debug.enabled");
         debugTime = config.getBoolean("debug.useDebugTimeChange");
-        getLogger().info("Configured and loaded WorldList!");
+        getLogger().info("Configured and loaded WorldList: " + toString(enabledWorlds).toString());
         /*
          * Warnings
          */
-        if(usePlayerTime && updateTime < 40) // maybe it'll be laggy
+        if(usePlayerTime && updateTime < 40 && !useMode36)
             getLogger().log(Level.WARNING, "Recommended to low your update time, since you're using ptime");
-        if(usePlayerTime && pvpTime) // pvptime wont change anything when using ptime
-            getLogger().log(Level.WARNING, "If you are using Ptime, there's no need of using pvpTime Compatibility");
-        if(enabledWorlds.size() < worldList.size()) // there's more worlds on WorldList than enabled worlds
+        if(usePlayerTime && usePVPTime) {
+            getLogger().log(Level.WARNING, "Disabling PVPTimeCompatibility (due PlayerTime use)");
+            config.set("config.usePVPTimeCompatibility", false);
+            usePVPTime = false;
+        }
+        if(enabledWorlds.size() < worldList.size())
             getLogger().log(Level.WARNING, "Only NORMAL worlds are enabled.");
-        if(debug)
-            getLogger().info("enabled World: " + toString(enabledWorlds).toString());
     }
     
     public List<World> toWorld(List<String> List) {

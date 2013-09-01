@@ -11,7 +11,7 @@ public class SetTimeTask implements Runnable {
 
     @Override
     public void run() {
-        if(plugin.pvpTime) {
+        if(plugin.usePVPTime) {
             // 500 ticks PVP Time
             if(plugin.resultedTime > (plugin.pvpStart - 5) && plugin.resultedTime < (plugin.pvpStart + 5))
                 for (World w : plugin.enabledWorlds)
@@ -28,8 +28,11 @@ public class SetTimeTask implements Runnable {
             else if (plugin.resultedTime > (plugin.pvpEnd + 6) && plugin.resultedTime < (plugin.pvpStart -6))
                 for (World w : plugin.enabledWorlds)
                     w.setFullTime(plugin.resultedTime);
-        } else
+        } else {
             for (World w : plugin.enabledWorlds)
                 w.setFullTime(plugin.resultedTime);
+            if(plugin.debug)
+                plugin.getLogger().info("Resulted: " + plugin.resultedTime);
+        }
     }
 }
