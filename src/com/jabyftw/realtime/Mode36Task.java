@@ -17,6 +17,8 @@ public class Mode36Task implements Runnable {
             for(World w : plugin.enabledWorlds)
                 for(Player p : w.getPlayers())
                     p.setPlayerTime(plugin.resultedTime, false);
+            if(plugin.debug)
+                plugin.getLogger().info("Resulted - usePlayerTime: " + plugin.resultedTime);
         } else {
             if(plugin.usePVPTime) {
                  // 500 ticks PVP Time
@@ -38,6 +40,8 @@ public class Mode36Task implements Runnable {
             } else {
                 for(World w : plugin.enabledWorlds)
                     w.setFullTime(plugin.resultedTime);
+                if(plugin.debug)
+                    plugin.getLogger().info("Resulted - !usePlayerTime: " + plugin.resultedTime);
             }
         }
     }

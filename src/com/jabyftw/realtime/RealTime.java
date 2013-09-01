@@ -1,5 +1,6 @@
 package com.jabyftw.realtime;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -31,15 +32,25 @@ public class RealTime extends JavaPlugin {
         setConfig();
         if(!useMode36) {
             sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), calcTime, calcTime);
-            if(usePlayerTime)
+            if(usePlayerTime) {
                 sche.scheduleSyncRepeatingTask(this, new SetPTimeTask(this), updateTime, updateTime);
-            else
+                getLogger().info("Registred tasks - PTimeTask, we are enabled!");
+            } else {
                 sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this), updateTime, updateTime);
-        } else if(useMode36) {
+                getLogger().info("Registred tasks - NormalTimeTask, we are enabled!");
+            }
+        } else {
             sche.runTaskAsynchronously(this, new CalculateTask(this));
             sche.scheduleSyncRepeatingTask(this, new Mode36Task(this), 72, 72);
+            getLogger().info("Registred tasks - Mode36Task, we are enabled!");
         }
-        getLogger().info("Registred tasks, we are enabled!");
+
+        try {
+            Metrics metrics = new Metrics(this);
+            metrics.start();
+        } catch (IOException e) {
+            getLogger().info("Couldn't connect to Metrics.org");
+        }
     }
     
     @Override
@@ -50,9 +61,9 @@ public class RealTime extends JavaPlugin {
     
     void setConfig() {
         FileConfiguration config = getConfig();
-        config.addDefault("config.useMode36", false);
-        config.addDefault("config.usePlayerTime", true);
-        config.addDefault("config.usePVPTimeCompatibility", false);
+        config.addDefault("RealTime.useMode36", false);
+        config.addDefault("RealTime.usePlayerTime", true);
+        config.addDefault("RealTime.usePVPTimeCompatibility", false);
         
         config.addDefault("config.updateTime", 60);
         config.addDefault("config.calculateTime", 30);
@@ -74,9 +85,9 @@ public class RealTime extends JavaPlugin {
         /*
          * CONFIG GERAL
          */
-        useMode36 = config.getBoolean("config.useMode36");
-        usePlayerTime = config.getBoolean("config.usePlayerTime");
-        usePVPTime = config.getBoolean("config.usePVPTimeCompatibility");
+        useMode36 = config.getBoolean("RealTime.useMode36");
+        usePlayerTime = config.getBoolean("RealTime.usePlayerTime");
+        usePVPTime = config.getBoolean("RealTime.usePVPTimeCompatibility");
         
         updateTime = config.getInt("config.updateTime");
         calcTime = config.getInt("config.calculateTime");

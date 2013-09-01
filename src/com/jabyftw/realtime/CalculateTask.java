@@ -25,6 +25,6 @@ public class CalculateTask implements Runnable {
             plugin.reloadConfig();
             return ((plugin.getConfig().getInt("debug.timeInHour") * 60 * 60) + (plugin.getConfig().getInt("debug.timeInMin") * 60) + plugin.getConfig().getInt("debug.timeInSec")) / 3.6;
         }
-        return (hour * 60 * 60) + (min * 60) + sec;
+        return ((hour * 60 * 60) + (min * 60) + sec) / 3.6;
     }
 }
