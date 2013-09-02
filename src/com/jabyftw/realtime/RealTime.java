@@ -20,8 +20,10 @@ public class RealTime extends JavaPlugin {
     public int pvpEnd;
     public int resultedTime;
     public int timeFix;
-    int calcTime;
-    int updateTime;
+    public double TperNight36; // 36 for Mode 3.6
+    public double TperDay36;
+    int NCalcTime;
+    int NUpdateTime; // N for Normal
     
     public List<World> enabledWorlds;
     List<String> worldList;
@@ -31,17 +33,17 @@ public class RealTime extends JavaPlugin {
         BukkitScheduler sche = getServer().getScheduler();
         setConfig();
         if(!useMode36) {
-            sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), calcTime, calcTime);
+            sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), NCalcTime, NCalcTime);
             if(usePlayerTime) {
-                sche.scheduleSyncRepeatingTask(this, new SetPTimeTask(this), updateTime, updateTime);
+                sche.scheduleSyncRepeatingTask(this, new SetPTimeTask(this), NUpdateTime, NUpdateTime);
                 getLogger().info("Registred tasks - PTimeTask, we are enabled!");
             } else {
-                sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this), updateTime, updateTime);
+                sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this), NUpdateTime, NUpdateTime);
                 getLogger().info("Registred tasks - NormalTimeTask, we are enabled!");
             }
         } else {
             sche.runTaskAsynchronously(this, new CalculateTask(this));
-            sche.scheduleSyncRepeatingTask(this, new Mode36Task(this), 72, 72);
+            sche.scheduleSyncRepeatingTask(this, new Mode36Task(this), 144, 144); // 72 = 3.6 sec -> 144 = 7.2 not that smooth, but it'll work
             getLogger().info("Registred tasks - Mode36Task, we are enabled!");
         }
 
@@ -65,8 +67,10 @@ public class RealTime extends JavaPlugin {
         config.addDefault("RealTime.usePlayerTime", true);
         config.addDefault("RealTime.usePVPTimeCompatibility", false);
         
-        config.addDefault("config.updateTime", 60);
-        config.addDefault("config.calculateTime", 30);
+        config.addDefault("config.normalMode.updateTime", 60);
+        config.addDefault("config.normalMode.calculateTime", 30);
+        config.addDefault("config.mode36.ticksInDay", 2); // every (3.6 * 2) seconds, +2 in resulted
+        config.addDefault("config.mode36.ticksInNight", 2.2); // every (3.6 * 2) seconds, +2.2 in resulted - night will be faster
         config.addDefault("config.fixYourTimeInTicks", 0);
         config.addDefault("config.worldList", toString(getServer().getWorlds()));
         
@@ -82,33 +86,31 @@ public class RealTime extends JavaPlugin {
         config.options().copyDefaults(true);
         saveConfig();
         reloadConfig();
-        /*
-         * CONFIG GERAL
-         */
+
         useMode36 = config.getBoolean("RealTime.useMode36");
         usePlayerTime = config.getBoolean("RealTime.usePlayerTime");
         usePVPTime = config.getBoolean("RealTime.usePVPTimeCompatibility");
         
-        updateTime = config.getInt("config.updateTime");
-        calcTime = config.getInt("config.calculateTime");
+        NUpdateTime = config.getInt("config.normalMode.updateTime");
+        NCalcTime = config.getInt("config.normalMode.calculateTime");
+        
+        TperDay36 = config.getDouble("config.mode36.ticksInDay");
+        TperNight36 = config.getDouble("config.mode36.ticksInNight");
+        
         timeFix = config.getInt("config.fixYourTimeInTicks");
         worldList = config.getStringList("config.worldList");
         enabledWorlds = toWorld(worldList);
-        /* 
-         * PVP TIME
-         */
+
         pvpStart = config.getInt("pvpTime.pvpStartTime");
         pvpEnd = config.getInt("pvpTime.pvpEndTime");
-        /*
-         * DEBUG
-         */
+
         debug = config.getBoolean("debug.enabled");
         debugTime = config.getBoolean("debug.useDebugTimeChange");
         getLogger().info("Configured and loaded WorldList: " + toString(enabledWorlds).toString());
         /*
          * Warnings
          */
-        if(usePlayerTime && updateTime < 40 && !useMode36)
+        if(usePlayerTime && NUpdateTime < 40 && !useMode36)
             getLogger().log(Level.WARNING, "Recommended to low your update time, since you're using ptime");
         if(usePlayerTime && usePVPTime) {
             getLogger().log(Level.WARNING, "Disabling PVPTimeCompatibility (due PlayerTime use)");

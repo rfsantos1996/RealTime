@@ -12,15 +12,22 @@ public class Mode36Task implements Runnable {
 
     @Override
     public void run() {
-        plugin.resultedTime = plugin.resultedTime + 1;
         if(plugin.resultedTime > 24000) // Reset the timeline
             plugin.resultedTime = 0;
+        
+        if(plugin.resultedTime >= 0 && plugin.resultedTime <= 12000) { // Check if its day: http://media-mcw.cursecdn.com/b/bc/Day_Night_Clock_24h.png
+            plugin.resultedTime = (int) (plugin.resultedTime + plugin.TperDay36);
+        } else {
+            plugin.resultedTime = (int) (plugin.resultedTime + plugin.TperNight36);
+        }
+        
         if(plugin.usePlayerTime) {
             for(World w : plugin.enabledWorlds)
                 for(Player p : w.getPlayers())
                     p.setPlayerTime(plugin.resultedTime, false);
             if(plugin.debug)
                 plugin.getLogger().info("Resulted - usePlayerTime: " + plugin.resultedTime);
+            
         } else {
             if(plugin.usePVPTime) {
                  // 500 ticks PVP Time
