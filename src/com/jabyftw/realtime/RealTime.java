@@ -114,6 +114,7 @@ public class RealTime extends JavaPlugin {
             getLogger().log(Level.WARNING, "Disabling PVPTimeCompatibility (due PlayerTime use)");
             config.set("config.usePVPTimeCompatibility", false);
             usePVPTime = false;
+            reloadConfig();
         }
         if(enabledWorlds.size() < worldList.size())
             getLogger().log(Level.WARNING, "Only NORMAL worlds are enabled.");

@@ -13,6 +13,8 @@ public class Mode36Task implements Runnable {
     @Override
     public void run() {
         plugin.resultedTime = plugin.resultedTime + 1;
+        if(plugin.resultedTime > 24000) // Reset the timeline
+            plugin.resultedTime = 0;
         if(plugin.usePlayerTime) {
             for(World w : plugin.enabledWorlds)
                 for(Player p : w.getPlayers())
