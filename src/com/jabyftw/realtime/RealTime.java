@@ -20,10 +20,11 @@ public class RealTime extends JavaPlugin {
     public int pvpEnd;
     public int resultedTime;
     public int timeFix;
-    public double TperNight36; // 36 for Mode 3.6
-    public double TperDay36;
+    public int TperNight36;
+    public int TperDay36;
     int NCalcTime;
-    int NUpdateTime; // N for Normal
+    int NUpdateTime;
+    int UpdateTime36;
     
     public List<World> enabledWorlds;
     List<String> worldList;
@@ -43,7 +44,7 @@ public class RealTime extends JavaPlugin {
             }
         } else {
             sche.runTaskAsynchronously(this, new CalculateTask(this));
-            sche.scheduleSyncRepeatingTask(this, new Mode36Task(this), 144, 144); // 72 = 3.6 sec -> 144 = 7.2 not that smooth, but it'll work
+            sche.scheduleSyncRepeatingTask(this, new Mode36Task(this), UpdateTime36 * 72, UpdateTime36 * 72); // 3.6 sec
             getLogger().info("Registred tasks - Mode36Task, we are enabled!");
         }
 
@@ -69,8 +70,10 @@ public class RealTime extends JavaPlugin {
         
         config.addDefault("config.normalMode.updateTime", 60);
         config.addDefault("config.normalMode.calculateTime", 30);
-        config.addDefault("config.mode36.ticksInDay", 2); // every (3.6 * 2) seconds, +2 in resulted
-        config.addDefault("config.mode36.ticksInNight", 2.2); // every (3.6 * 2) seconds, +2.2 in resulted - night will be faster
+        config.addDefault("config.mode36.updateTime", 2);
+        UpdateTime36 = config.getInt("config.mode36.updateTime");
+        config.addDefault("config.mode36.ticksInDay", UpdateTime36 / 2);
+        config.addDefault("config.mode36.ticksInNight", UpdateTime36);
         config.addDefault("config.fixYourTimeInTicks", 0);
         config.addDefault("config.worldList", toString(getServer().getWorlds()));
         
@@ -94,8 +97,8 @@ public class RealTime extends JavaPlugin {
         NUpdateTime = config.getInt("config.normalMode.updateTime");
         NCalcTime = config.getInt("config.normalMode.calculateTime");
         
-        TperDay36 = config.getDouble("config.mode36.ticksInDay");
-        TperNight36 = config.getDouble("config.mode36.ticksInNight");
+        TperDay36 = config.getInt("config.mode36.ticksInDay");
+        TperNight36 = config.getInt("config.mode36.ticksInNight");
         
         timeFix = config.getInt("config.fixYourTimeInTicks");
         worldList = config.getStringList("config.worldList");
@@ -113,10 +116,9 @@ public class RealTime extends JavaPlugin {
         if(usePlayerTime && NUpdateTime < 40 && !useMode36)
             getLogger().log(Level.WARNING, "Recommended to low your update time, since you're using ptime");
         if(usePlayerTime && usePVPTime) {
-            getLogger().log(Level.WARNING, "Disabling PVPTimeCompatibility (due PlayerTime use)");
-            config.set("config.usePVPTimeCompatibility", false);
+            getLogger().log(Level.WARNING, "PVPTimeCompatibility isnt needed when using PTime.");
+            config.set("RealTime.usePVPTimeCompatibility", false);
             usePVPTime = false;
-            reloadConfig();
         }
         if(enabledWorlds.size() < worldList.size())
             getLogger().log(Level.WARNING, "Only NORMAL worlds are enabled.");
