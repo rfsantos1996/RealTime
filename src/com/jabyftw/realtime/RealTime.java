@@ -2,6 +2,7 @@ package com.jabyftw.realtime;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import org.bukkit.World;
@@ -10,134 +11,162 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
 public class RealTime extends JavaPlugin {
-    public boolean debug;
-    public boolean debugTime;
-    public boolean useMode36;
-    public boolean usePlayerTime;
-    public boolean usePVPTime;
+    boolean usePlayerTime;
+    boolean usePVPTime;
+    boolean useDebugMode;
+    boolean useDebugTime;
     
-    public int pvpStart;
-    public int pvpEnd;
-    public int resultedTime;
-    public int timeFix;
-    public int TperNight36;
-    public int TperDay36;
-    int NCalcTime;
-    int NUpdateTime;
-    int UpdateTime36;
+    int useMode;
+    int timeFix;
+    int M0CalcDelay;
+    int M0UpdateDelay;
+    int M1UpdateDelay;
+    int pvpStart;
+    int pvpEnd;
+    int debugHour;
+    int debugMin;
+    int debugSec;
+    int mcTime;
     
-    public List<World> enabledWorlds;
     List<String> worldList;
+    List<World> enabledWorlds;
     
     @Override
     public void onEnable() {
-        BukkitScheduler sche = getServer().getScheduler();
         setConfig();
-        if(!useMode36) {
-            sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), NCalcTime, NCalcTime);
-            if(usePlayerTime) {
-                sche.scheduleSyncRepeatingTask(this, new SetPTimeTask(this), NUpdateTime, NUpdateTime);
-                getLogger().info("Registred tasks - PTimeTask, we are enabled!");
-            } else {
-                sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this), NUpdateTime, NUpdateTime);
-                getLogger().info("Registred tasks - NormalTimeTask, we are enabled!");
-            }
-        } else {
-            sche.runTaskAsynchronously(this, new CalculateTask(this));
-            sche.scheduleSyncRepeatingTask(this, new Mode36Task(this), UpdateTime36 * 72, UpdateTime36 * 72); // 3.6 sec
-            getLogger().info("Registred tasks - Mode36Task, we are enabled!");
-        }
-
+        BukkitScheduler sche = getServer().getScheduler();        
         try {
             Metrics metrics = new Metrics(this);
             metrics.start();
+            log("Metrics started.", 0);
         } catch (IOException e) {
-            getLogger().info("Couldn't connect to Metrics.org");
+            log("Couldn't connect to Metrics.org: " + e, 1);
+        }
+        
+        if(useMode == 0) {
+            sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), 10, M0CalcDelay);
+            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 0), 20, M0UpdateDelay);
+            log("Mode 2 running.", 0);
+        } else if(useMode == 1) {
+            sche.scheduleAsyncDelayedTask(this, new CalculateTask(this));
+            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 1), 20, M1UpdateDelay);
+            log("Mode 1 running.", 0);
+        } else {
+            log("You can only set mode 0 or 1.", 1);
         }
     }
     
     @Override
-    public void onDisable() {
-        getServer().getScheduler().cancelTasks(this);
-        getLogger().info("Unregistered tasks!");
-    }
+    public void onDisable() {}
     
     void setConfig() {
         FileConfiguration config = getConfig();
-        config.addDefault("RealTime.useMode36", false);
-        config.addDefault("RealTime.usePlayerTime", true);
-        config.addDefault("RealTime.usePVPTimeCompatibility", false);
+        config.addDefault("config.usePlayerTime", true);
+        config.addDefault("config.useMode", 0); // 0 = Normal mode, 1 = 3.6 sec Mode
+        config.addDefault("config.timeFixInTicks", 0);
+        config.addDefault("config.worldList", toStringList(getServer().getWorlds()));
         
-        config.addDefault("config.normalMode.updateTime", 60);
-        config.addDefault("config.normalMode.calculateTime", 30);
-        config.addDefault("config.mode36.updateTime", 2);
-        UpdateTime36 = config.getInt("config.mode36.updateTime");
-        config.addDefault("config.mode36.ticksInDay", UpdateTime36 / 2);
-        config.addDefault("config.mode36.ticksInNight", UpdateTime36);
-        config.addDefault("config.fixYourTimeInTicks", 0);
-        config.addDefault("config.worldList", toString(getServer().getWorlds()));
+        config.addDefault("config.mode0.CalcDelayInTicks", 1);
+        config.addDefault("config.mode0.UpdateDelayInTicks", 1);
+        config.addDefault("config.mode1.UpdateDelayInTicks", 72); // 3.6 sec = 72ticks || 144 = 7.2 sec
         
-        config.addDefault("pvpTime.pvpStartTime", 500);
-        config.addDefault("pvpTime.pvpEndTime", 12500);
+        config.addDefault("PVPTime.enabled", false);
+        config.addDefault("PVPTime.startTime", 500); // default values
+        config.addDefault("PVPTime.endTime", 12500);
         
-        config.addDefault("debug.enabled", false);
-        config.addDefault("debug.useDebugTimeChange", false);
-        config.addDefault("debug.timeInHour", 0);
-        config.addDefault("debug.timeInMin", 0);
-        config.addDefault("debug.timeInSec", 0);
-        
+        config.addDefault("debug.useDebugMode", false);
+        config.addDefault("debug.DebugTime.enabled", false);
+        config.addDefault("debug.DebugTime.hour", 0);
+        config.addDefault("debug.DebugTime.min", 0);
+        config.addDefault("debug.DebugTime.sec", 0);
         config.options().copyDefaults(true);
         saveConfig();
-        reloadConfig();
-
-        useMode36 = config.getBoolean("RealTime.useMode36");
-        usePlayerTime = config.getBoolean("RealTime.usePlayerTime");
-        usePVPTime = config.getBoolean("RealTime.usePVPTimeCompatibility");
         
-        NUpdateTime = config.getInt("config.normalMode.updateTime");
-        NCalcTime = config.getInt("config.normalMode.calculateTime");
+        usePlayerTime = config.getBoolean("config.usePlayerTime");
+        useMode = config.getInt("config.useMode");
+        timeFix = config.getInt("config.timeFixInTicks");
+        enabledWorlds = toWorldList(config.getStringList("config.worldList"));
         
-        TperDay36 = config.getInt("config.mode36.ticksInDay");
-        TperNight36 = config.getInt("config.mode36.ticksInNight");
+        M0CalcDelay = config.getInt("config.mode0.CalcDelayInTicks");
+        M0UpdateDelay = config.getInt("config.mode0.UpdateDelayInTicks");
+        M1UpdateDelay = config.getInt("config.mode1.UpdateDelayInTicks");
         
-        timeFix = config.getInt("config.fixYourTimeInTicks");
-        worldList = config.getStringList("config.worldList");
-        enabledWorlds = toWorld(worldList);
-
-        pvpStart = config.getInt("pvpTime.pvpStartTime");
-        pvpEnd = config.getInt("pvpTime.pvpEndTime");
-
-        debug = config.getBoolean("debug.enabled");
-        debugTime = config.getBoolean("debug.useDebugTimeChange");
-        getLogger().info("Configured and loaded WorldList: " + toString(enabledWorlds).toString());
-        /*
-         * Warnings
-         */
-        if(usePlayerTime && NUpdateTime < 40 && !useMode36)
-            getLogger().log(Level.WARNING, "Recommended to low your update time, since you're using ptime");
+        usePVPTime = config.getBoolean("PVPTime.enabled");
+        pvpStart = config.getInt("PVPTime.startTime");
+        pvpEnd = config.getInt("PVPTime.endTime");
+        
+        useDebugMode = config.getBoolean("debug.useDebugMode");
+        useDebugTime = config.getBoolean("debug.DebugTime.enabled");
+        debugHour = config.getInt("debug.DebugTime.hour");
+        debugMin = config.getInt("debug.DebugTime.min");
+        debugSec = config.getInt("debug.DebugTime.sec");
+        
         if(usePlayerTime && usePVPTime) {
-            getLogger().log(Level.WARNING, "PVPTimeCompatibility isnt needed when using PTime.");
-            config.set("RealTime.usePVPTimeCompatibility", false);
+            log("Can't use PlayerTime + PVPTime", 1);
             usePVPTime = false;
         }
-        if(enabledWorlds.size() < worldList.size())
-            getLogger().log(Level.WARNING, "Only NORMAL worlds are enabled.");
+        if(useMode == 1 && M1UpdateDelay != 72)
+            log("You are changing the time scale!", 1);
+        if(usePlayerTime && M0UpdateDelay < 40 && useMode == 0)
+            log("You may have some lag with this updateTime", 1);
+        if(usePlayerTime && M1UpdateDelay < 72 && useMode == 1)
+            log("You may have some lag with this updateTime", 1);
+        log("Configured.", 0);
     }
     
-    public List<World> toWorld(List<String> List) {
+        /*
+         * 0 - normal
+         * 1 - warning
+         * 2 - debug
+         */
+    public void log(String msg, int mode) {
+        if(mode == 0) // NORMAL
+            getLogger().log(Level.INFO, msg);
+        else if(mode == 1) // WARNING
+            getLogger().log(Level.WARNING, msg);
+        else if(mode == 2) { // DEBUG
+            if(useDebugMode)
+                getLogger().log(Level.INFO, "Debug: " + msg);
+        }
+    }
+    
+    public int getTimeSec(String time) {
+        int hour = Integer.parseInt(time.substring(0, 2));
+        int min = Integer.parseInt(time.substring(3, 5));
+        int sec = Integer.parseInt(time.substring(6, 8));
+        if(useDebugTime)
+            return ((debugHour * 60 * 60) + (debugMin * 60) + debugSec);
+        return ((hour * 60 * 60) + (min * 60) + sec);
+    }
+    
+    List<World> toWorldList(List<String> NameList) {
         List<World> worlds = new ArrayList();
-        for(int x = 0; x < List.size(); x++) {
-            World w = getServer().getWorld(worldList.get(x));
+        for(int x = 0; x < NameList.size(); x++) {
+            World w = getServer().getWorld(NameList.get(x));
             if(w.getEnvironment().getId() == 0)
                 worlds.add(w);
         }
         return worlds;
     }
     
-    public List<String> toString(List<World> worldList) {
-        List<String> worlds = new ArrayList();
+    List<String> toStringList(List<World> worldList) {
+        List<String> names = new ArrayList();
         for(int x = 0; x < worldList.size(); x++)
-            worlds.add(worldList.get(x).getName());
-        return worlds;
+            if(worldList.get(x).getEnvironment().getId() == 0)
+                names.add(worldList.get(x).getName());
+        return names;
+    }
+}
+
+class CalculateTask implements Runnable {
+    private RealTime plugin;
+    public CalculateTask(RealTime plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public void run() {
+        String time = new Date().toString().substring(11, 19);
+        plugin.mcTime = (plugin.getTimeSec(time) - 6000) + plugin.timeFix;
     }
 }
