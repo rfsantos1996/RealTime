@@ -64,12 +64,12 @@ public class RealTime extends JavaPlugin {
         saveDefaultConfig();
         FileConfiguration config = getConfig();
         
-        M0CalcDelay = config.getInt("config.mode0.CalcDelayInTicks");
-        M0UpdateDelay = config.getInt("config.mode0.UpdateDelayInTicks");
-        M1UpdateDelay = config.getInt("config.mode1.UpdateDelayIn3dot6Seconds");
+        M0CalcDelay = config.getInt("config.modeZero.CalcDelayInTicks");
+        M0UpdateDelay = config.getInt("config.modeZero.UpdateDelayInTicks");
+        M1UpdateDelay = config.getInt("config.modeOne.UpdateDelayIn3dot6Seconds");
         
         usePlayerTime = config.getBoolean("config.usePlayerTime");
-        useMode = config.getInt("config.useMode");
+        useMode = config.getInt("config.ModeBeingUsed");
         timeFix = config.getInt("config.timeFixInTicks");
         enabledWorlds = toWorldList(config.getStringList("config.worldList"));
         
