@@ -60,27 +60,9 @@ public class RealTime extends JavaPlugin {
     public void onDisable() {}
     
     void setConfig() {
+        getDataFolder().mkdir();
+        saveDefaultConfig();
         FileConfiguration config = getConfig();
-        config.addDefault("config.modeZero.CalcDelayInTicks", 1);
-        config.addDefault("config.modeZero.UpdateDelayInTicks", 1);
-        config.addDefault("config.modeOne.UpdateDelayIn3dot6Seconds", 1); // 3.6 sec = 1* 72ticks || 144 = 2*7.2 sec
-        
-        config.addDefault("config.usePlayerTime", true);
-        config.addDefault("config.ModeBeingUsed", 0); // 0 = Normal mode, 1 = 3.6 sec Mode
-        config.addDefault("config.timeFixInTicks", 0);
-        config.addDefault("config.worldList", toStringList(getServer().getWorlds()));
-        
-        config.addDefault("PVPTime.enabled", false);
-        config.addDefault("PVPTime.startTime", 500); // default values
-        config.addDefault("PVPTime.endTime", 12500);
-        
-        config.addDefault("debug.useDebugMode", false);
-        config.addDefault("debug.DebugTime.enabled", false);
-        config.addDefault("debug.DebugTime.hour", 0);
-        config.addDefault("debug.DebugTime.min", 0);
-        config.addDefault("debug.DebugTime.sec", 0);
-        config.options().copyDefaults(true);
-        saveConfig();
         
         M0CalcDelay = config.getInt("config.mode0.CalcDelayInTicks");
         M0UpdateDelay = config.getInt("config.mode0.UpdateDelayInTicks");

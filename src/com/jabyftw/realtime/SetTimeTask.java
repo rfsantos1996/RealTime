@@ -14,7 +14,10 @@ public class SetTimeTask implements Runnable {
 
     @Override
     public void run() {
-        if(mode == 0) { // NORMAL MODE
+        /*
+         * NORMAL MODE
+         */
+        if(mode == 0) {
             if(plugin.usePVPTime) {
                  // 500 ticks PVP Time
                 if(plugin.mcTime > (plugin.pvpStart - 5) && plugin.mcTime < (plugin.pvpStart + 5))
@@ -36,6 +39,10 @@ public class SetTimeTask implements Runnable {
                 if(plugin.usePlayerTime) {
                     for(World w : plugin.enabledWorlds)
                         for(Player p : w.getPlayers()) {
+                          if(p.hasPermission("realtime.noptime")) {
+                                plugin.log("NORMAL : Player have noptime - " + p.getName(), 2);
+                                return;
+                            }
                             p.setPlayerTime(plugin.mcTime, true);
                             plugin.log("NORMAL : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
                         }
@@ -45,7 +52,10 @@ public class SetTimeTask implements Runnable {
                     plugin.log("NORMAL : World : time - " + plugin.mcTime, 2);
                 }
             }
-        } else if(mode == 1) { // MODE 3.6
+            /*
+             * MODE 3.6
+             */
+        } else if(mode == 1) {
             plugin.mcTime = plugin.mcTime + 1;
             if(plugin.mcTime > 24000)
                 plugin.mcTime = 0;
@@ -71,6 +81,10 @@ public class SetTimeTask implements Runnable {
                 if(plugin.usePlayerTime) {
                     for(World w : plugin.enabledWorlds)
                         for(Player p : w.getPlayers()) {
+                            if(p.hasPermission("realtime.noptime")) {
+                                plugin.log("MODE36 : Player have noptime - " + p.getName(), 2);
+                                return;
+                            }
                             p.setPlayerTime(plugin.mcTime, true);
                             plugin.log("MODE36 : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
                         }
