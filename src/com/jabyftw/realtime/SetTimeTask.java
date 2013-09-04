@@ -35,11 +35,14 @@ public class SetTimeTask implements Runnable {
             } else {
                 if(plugin.usePlayerTime) {
                     for(World w : plugin.enabledWorlds)
-                        for(Player p : w.getPlayers())
-                            p.setPlayerTime(plugin.mcTime, false);
+                        for(Player p : w.getPlayers()) {
+                            p.setPlayerTime(plugin.mcTime, true);
+                            plugin.log("NORMAL : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
+                        }
                 } else {
                     for(World w : plugin.enabledWorlds)
                         w.setFullTime(plugin.mcTime);
+                    plugin.log("NORMAL : World : time - " + plugin.mcTime, 2);
                 }
             }
         } else if(mode == 1) { // MODE 3.6
@@ -67,11 +70,14 @@ public class SetTimeTask implements Runnable {
             } else {
                 if(plugin.usePlayerTime) {
                     for(World w : plugin.enabledWorlds)
-                        for(Player p : w.getPlayers())
-                            p.setPlayerTime(plugin.mcTime, false);
+                        for(Player p : w.getPlayers()) {
+                            p.setPlayerTime(plugin.mcTime, true);
+                            plugin.log("MODE36 : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
+                        }
                 } else {
                     for(World w : plugin.enabledWorlds)
                         w.setFullTime(plugin.mcTime);
+                    plugin.log("MODE36 : World : time - " + plugin.mcTime, 2);
                 }
             }
         }

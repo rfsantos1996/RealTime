@@ -49,7 +49,7 @@ public class RealTime extends JavaPlugin {
             log("Mode 2 running.", 0);
         } else if(useMode == 1) {
             sche.scheduleAsyncDelayedTask(this, new CalculateTask(this));
-            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 1), 20, M1UpdateDelay);
+            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 1), 20, M1UpdateDelay * 72);
             log("Mode 1 running.", 0);
         } else {
             log("You can only set mode 0 or 1.", 1);
@@ -61,14 +61,14 @@ public class RealTime extends JavaPlugin {
     
     void setConfig() {
         FileConfiguration config = getConfig();
+        config.addDefault("config.modeZero.CalcDelayInTicks", 1);
+        config.addDefault("config.modeZero.UpdateDelayInTicks", 1);
+        config.addDefault("config.modeOne.UpdateDelayIn3dot6Seconds", 1); // 3.6 sec = 1* 72ticks || 144 = 2*7.2 sec
+        
         config.addDefault("config.usePlayerTime", true);
-        config.addDefault("config.useMode", 0); // 0 = Normal mode, 1 = 3.6 sec Mode
+        config.addDefault("config.ModeBeingUsed", 0); // 0 = Normal mode, 1 = 3.6 sec Mode
         config.addDefault("config.timeFixInTicks", 0);
         config.addDefault("config.worldList", toStringList(getServer().getWorlds()));
-        
-        config.addDefault("config.mode0.CalcDelayInTicks", 1);
-        config.addDefault("config.mode0.UpdateDelayInTicks", 1);
-        config.addDefault("config.mode1.UpdateDelayInTicks", 72); // 3.6 sec = 72ticks || 144 = 7.2 sec
         
         config.addDefault("PVPTime.enabled", false);
         config.addDefault("PVPTime.startTime", 500); // default values
@@ -82,14 +82,14 @@ public class RealTime extends JavaPlugin {
         config.options().copyDefaults(true);
         saveConfig();
         
+        M0CalcDelay = config.getInt("config.mode0.CalcDelayInTicks");
+        M0UpdateDelay = config.getInt("config.mode0.UpdateDelayInTicks");
+        M1UpdateDelay = config.getInt("config.mode1.UpdateDelayIn3dot6Seconds");
+        
         usePlayerTime = config.getBoolean("config.usePlayerTime");
         useMode = config.getInt("config.useMode");
         timeFix = config.getInt("config.timeFixInTicks");
         enabledWorlds = toWorldList(config.getStringList("config.worldList"));
-        
-        M0CalcDelay = config.getInt("config.mode0.CalcDelayInTicks");
-        M0UpdateDelay = config.getInt("config.mode0.UpdateDelayInTicks");
-        M1UpdateDelay = config.getInt("config.mode1.UpdateDelayInTicks");
         
         usePVPTime = config.getBoolean("PVPTime.enabled");
         pvpStart = config.getInt("PVPTime.startTime");
@@ -105,11 +105,9 @@ public class RealTime extends JavaPlugin {
             log("Can't use PlayerTime + PVPTime", 1);
             usePVPTime = false;
         }
-        if(useMode == 1 && M1UpdateDelay != 72)
+        if(useMode == 1 && M1UpdateDelay != 1)
             log("You are changing the time scale!", 1);
         if(usePlayerTime && M0UpdateDelay < 40 && useMode == 0)
-            log("You may have some lag with this updateTime", 1);
-        if(usePlayerTime && M1UpdateDelay < 72 && useMode == 1)
             log("You may have some lag with this updateTime", 1);
         log("Configured.", 0);
     }
@@ -167,6 +165,7 @@ class CalculateTask implements Runnable {
     @Override
     public void run() {
         String time = new Date().toString().substring(11, 19);
-        plugin.mcTime = (plugin.getTimeSec(time) - 6000) + plugin.timeFix;
+        plugin.mcTime = (int) (((plugin.getTimeSec(time) / 3.6) - 6000) + plugin.timeFix);
+        plugin.log("mcTime: " + plugin.mcTime, 2);
     }
 }
