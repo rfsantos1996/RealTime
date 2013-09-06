@@ -42,6 +42,8 @@ debug:
   # You can test your server for certain clocks, just enable this (even if useDebugMode is false), set the time and restart
   DebugTime:
     enabled: false
+    # This will make the time STOP in this (hour:min:sec) or allow it goes normally
+    fixed: false
     hour: 0
     min: 0
     sec: 0
