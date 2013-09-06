@@ -171,7 +171,13 @@ class CalculateTask implements Runnable {
     @Override
     public void run() {
         String time = new Date().toString().substring(11, 19);
-        plugin.mcTime = (int) (((plugin.getTimeSec(time) / 3.6) - 6000) + plugin.timeFix);
+        int timeInSec = (int) (plugin.getTimeSec(time) / 3.6);
+        
+        if((timeInSec - 6000) < 0) { // Should fix 00:00 being day, but timeInSec will be negative until 6am
+            plugin.mcTime = (int) (((timeInSec + 24000) - 6000) + plugin.timeFix); // timeInSec will be -6000, but it should be 18000
+        } else {
+            plugin.mcTime = (int) ((timeInSec - 6000) + plugin.timeFix);
+        }
         plugin.log("mcTime: " + plugin.mcTime, 2);
     }
 }
