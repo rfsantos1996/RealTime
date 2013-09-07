@@ -37,13 +37,15 @@ public class SetTimeTask implements Runnable {
                         w.setFullTime(plugin.mcTime);
             } else {
                 if(plugin.usePlayerTime) {
+                    if(plugin.mcTime == 0)
+                        plugin.mcTime = 1; // This will fix when its 6am and appear as servertime instead of playertime
                     for(World w : plugin.enabledWorlds)
                         for(Player p : w.getPlayers()) {
                           if(p.hasPermission("realtime.noptime")) {
                                 plugin.log("NORMAL : Player have noptime - " + p.getName(), 2);
                                 return;
                             }
-                            p.setPlayerTime(plugin.mcTime, true);
+                            p.setPlayerTime(plugin.mcTime, false);
                             plugin.log("NORMAL : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
                         }
                 } else {
@@ -79,13 +81,15 @@ public class SetTimeTask implements Runnable {
                         w.setFullTime(plugin.mcTime);
             } else {
                 if(plugin.usePlayerTime) {
+                    if(plugin.mcTime == 0)
+                        plugin.mcTime = 1; // This will fix when its 6am and appear as servertime instead of playertime
                     for(World w : plugin.enabledWorlds)
                         for(Player p : w.getPlayers()) {
                             if(p.hasPermission("realtime.noptime")) {
                                 plugin.log("MODE36 : Player have noptime - " + p.getName(), 2);
                                 return;
                             }
-                            p.setPlayerTime(plugin.mcTime, true);
+                            p.setPlayerTime(plugin.mcTime, false);
                             plugin.log("MODE36 : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
                         }
                 } else {

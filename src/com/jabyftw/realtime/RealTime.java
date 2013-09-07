@@ -15,7 +15,6 @@ public class RealTime extends JavaPlugin {
     boolean usePVPTime;
     boolean useDebugMode;
     boolean useDebugTime;
-    boolean DebugTimeFixed;
     
     int useMode;
     int timeFix;
@@ -80,7 +79,6 @@ public class RealTime extends JavaPlugin {
         
         useDebugMode = config.getBoolean("debug.useDebugMode");
         useDebugTime = config.getBoolean("debug.DebugTime.enabled");
-        DebugTimeFixed = config.getBoolean("debug.DebugTime.fixed");
         debugHour = config.getInt("debug.DebugTime.hour");
         debugMin = config.getInt("debug.DebugTime.min");
         debugSec = config.getInt("debug.DebugTime.sec");
@@ -93,12 +91,6 @@ public class RealTime extends JavaPlugin {
             log("You are changing the time scale!", 1);
         if(usePlayerTime && M0UpdateDelay < 40 && useMode == 0)
             log("You may have some lag with this updateTime", 1);
-        if(!DebugTimeFixed && M0CalcDelay != 20) {
-            M0CalcDelay = 20;
-            log("Setting calculation task to 1 sec due not Fixed Debug Time", 1);
-            if(useDebugMode)
-                M0UpdateDelay = 1;
-        }
         if(timeFix > 24000 || timeFix < -24000) {
             timeFix = 0;
             log("You cant timeFix your time more than a day (24.000)", 1);
@@ -127,26 +119,12 @@ public class RealTime extends JavaPlugin {
         }
     }
     
-    private int fixed;
-    private boolean firstRun = true;
-    
     public int getTimeSec(String time) {
         int hour = Integer.parseInt(time.substring(0, 2));
         int min = Integer.parseInt(time.substring(3, 5));
         int sec = Integer.parseInt(time.substring(6, 8));
         if(useDebugTime) {
-            if(!DebugTimeFixed) {
-                if(firstRun) {
-                    fixed = ((debugHour * 60 * 60) + (debugMin * 60) + debugSec); // 86340 for 23:59:00
-                    firstRun = false;
-                    return fixed;
-                } else {
-                    fixed = fixed + 1;
-                    return fixed; // 86340 + 1 on each run -> every 20ticks
-                }
-            } else {
-                return ((debugHour * 60 * 60) + (debugMin * 60) + debugSec);
-            }
+            return ((debugHour * 60 * 60) + (debugMin * 60) + debugSec);
         }
         return ((hour * 60 * 60) + (min * 60) + sec);
     }
