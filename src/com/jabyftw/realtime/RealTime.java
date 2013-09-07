@@ -99,6 +99,14 @@ public class RealTime extends JavaPlugin {
             if(useDebugMode)
                 M0UpdateDelay = 1;
         }
+        if(timeFix > 24000 || timeFix < -24000) {
+            timeFix = 0;
+            log("You cant timeFix your time more than a day (24.000)", 1);
+        }
+        if(timeFix < 0) {
+            timeFix = timeFix + 24000; // -2.000+24.000 = 22.000
+            log("You cant set the timeFix to negative values. Setting into positive ones!", 1);
+        }
             
         log("Configured.", 0);
     }
