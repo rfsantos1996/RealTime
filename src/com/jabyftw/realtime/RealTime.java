@@ -11,7 +11,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
-
 public class RealTime extends JavaPlugin {
     boolean started = false;
     boolean autoEnable;
@@ -70,6 +69,15 @@ public class RealTime extends JavaPlugin {
         saveDefaultConfig();
         FileConfiguration config = getConfig();
         
+        try {
+            enabledWorlds = toWorldList(config.getStringList("config.worldList"));
+        } catch(NullPointerException e) {
+            log("Check your worlds' name! There's a error on your WorldList from config.yml: " + e, 1);
+            getServer().getScheduler().cancelTasks(this);
+            log("RealTime disabled.", 1);
+            return;
+        }
+        
         M0CalcDelay = config.getInt("config.modeZero.CalcDelayInTicks");
         M0UpdateDelay = config.getInt("config.modeZero.UpdateDelayInTicks");
         M1UpdateDelay = config.getInt("config.modeOne.UpdateDelayIn3dot6Seconds");
@@ -79,7 +87,6 @@ public class RealTime extends JavaPlugin {
         autoEnable = config.getBoolean("config.enableOnLoad");
         usePermissions = config.getBoolean("config.permissionEnabled");
         timeFix = config.getInt("config.timeFixInTicks");
-        enabledWorlds = toWorldList(config.getStringList("config.worldList"));
         
         usePVPTime = config.getBoolean("PVPTime.enabled");
         pvpStart = config.getInt("PVPTime.startTime");

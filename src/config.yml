@@ -25,7 +25,7 @@ config:
   enableOnLoad: true
   
   # This will enable/disable the permissions - even for OPs
-  # - This DONT APPLY for realtime.start/stop/reload! -
+  # - This DOENST APPLY for realtime.start/stop/reload! -
   permissionEnabled: false
   
   # This will fix your time in case your server is on another country, for example
