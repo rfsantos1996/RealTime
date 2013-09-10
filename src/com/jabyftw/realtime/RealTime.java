@@ -47,11 +47,16 @@ public class RealTime extends JavaPlugin {
             log("Couldn't connect to Metrics.org: " + e, 1);
         }
         
-        if(autoEnable)
+        getCommand("realtime").setExecutor(new MyCommandExecutor(this)); // i'm dumb
+        
+        if(autoEnable) {
             if(!started)
                 startTasks();
-        else
+            else
+                log("RealTime IS already running somehow!", 1);
+        } else {
             log("RealTime ISNT running! Use: /realtime start", 1);
+        }
     }
     
     @Override

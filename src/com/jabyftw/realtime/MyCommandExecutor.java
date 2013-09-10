@@ -2,12 +2,13 @@ package com.jabyftw.realtime;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-public class CommandExecutor {
+public class MyCommandExecutor implements CommandExecutor {
     private RealTime plugin;
     
-    public CommandExecutor(RealTime plugin) {
+    public MyCommandExecutor(RealTime plugin) {
         this.plugin = plugin;
     }
     
