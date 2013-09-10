@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import org.bukkit.World;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -18,6 +17,7 @@ public class RealTime extends JavaPlugin {
     
     boolean usePlayerTime;
     boolean usePermissions;
+    boolean useSelfFixing;
     boolean usePVPTime;
     boolean useDebugMode;
     boolean useDebugTime;
@@ -74,15 +74,6 @@ public class RealTime extends JavaPlugin {
         saveDefaultConfig();
         FileConfiguration config = getConfig();
         
-        try {
-            enabledWorlds = toWorldList(config.getStringList("config.worldList"));
-        } catch(NullPointerException e) {
-            log("Check your worlds' name! There's a error on your WorldList from config.yml: " + e, 1);
-            getServer().getScheduler().cancelTasks(this);
-            log("RealTime disabled.", 1);
-            return;
-        }
-        
         M0CalcDelay = config.getInt("config.modeZero.CalcDelayInTicks");
         M0UpdateDelay = config.getInt("config.modeZero.UpdateDelayInTicks");
         M1UpdateDelay = config.getInt("config.modeOne.UpdateDelayIn3dot6Seconds");
@@ -91,6 +82,7 @@ public class RealTime extends JavaPlugin {
         useMode = config.getInt("config.ModeBeingUsed");
         autoEnable = config.getBoolean("config.enableOnLoad");
         usePermissions = config.getBoolean("config.permissionEnabled");
+        useSelfFixing = config.getBoolean("config.enableSelfFixing");
         timeFix = config.getInt("config.timeFixInTicks");
         
         usePVPTime = config.getBoolean("PVPTime.enabled");
@@ -126,13 +118,15 @@ public class RealTime extends JavaPlugin {
     public void startTasks() {
         BukkitScheduler sche = getServer().getScheduler();
         if(useMode == 0) {
-            sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), 10, M0CalcDelay);
-            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 0), 20, M0UpdateDelay);
+            sche.scheduleSyncDelayedTask(this, new EnableWorldsTask(this), 20);
+            sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), 40, M0CalcDelay);
+            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 0), 45, M0UpdateDelay);
             started = true;
             log("NORMAL Mode (zero) is now running.", 0);
         } else if(useMode == 1) {
-            sche.scheduleAsyncDelayedTask(this, new CalculateTask(this));
-            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 1), 20, M1UpdateDelay * 72);
+            sche.scheduleSyncDelayedTask(this, new EnableWorldsTask(this), 20);
+            sche.scheduleAsyncDelayedTask(this, new CalculateTask(this), 40);
+            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 1), 45, M1UpdateDelay * 72);
             started = true;
             log("3.6 Mode (one) is now running.", 0);
         } else {
@@ -173,25 +167,8 @@ public class RealTime extends JavaPlugin {
         }
         return ((hour * 60 * 60) + (min * 60) + sec);
     }
-    
-    List<World> toWorldList(List<String> NameList) {
-        List<World> worlds = new ArrayList();
-        for(int x = 0; x < NameList.size(); x++) {
-            World w = getServer().getWorld(NameList.get(x));
-            if(w.getEnvironment().getId() == 0)
-                worlds.add(w);
-        }
-        return worlds;
-    }
-    
-    List<String> toStringList(List<World> worldList) {
-        List<String> names = new ArrayList();
-        for(int x = 0; x < worldList.size(); x++)
-            if(worldList.get(x).getEnvironment().getId() == 0)
-                names.add(worldList.get(x).getName());
-        return names;
-    }
 }
+
 class CalculateTask implements Runnable {
     private RealTime plugin;
     public CalculateTask(RealTime plugin) {
@@ -209,5 +186,47 @@ class CalculateTask implements Runnable {
             plugin.mcTime = (int) ((timeInSec - 6000) + plugin.timeFix);
         }
         plugin.log("mcTime: " + plugin.mcTime, 2);
+    }
+}
+
+class EnableWorldsTask implements Runnable {
+    private RealTime plugin;
+    public EnableWorldsTask(RealTime plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public void run() {
+        try {
+            plugin.enabledWorlds = toWorldList(plugin.getConfig().getStringList("config.worldList"));
+            plugin.log("Loaded WorldList: " + plugin.enabledWorlds.toString(), 0);
+        } catch(NullPointerException e) {
+            plugin.enabledWorlds = toWorldList(toStringList(plugin.getServer().getWorlds())); // I know, its ugly...
+            if(plugin.useSelfFixing) {
+                plugin.log("Couldn't use WorldList from config.yml, creating AND SAVING: " + plugin.enabledWorlds.toString(), 1);
+                plugin.getConfig().set("config.worldList", toStringList(plugin.enabledWorlds));
+                plugin.saveConfig();
+            } else {
+                plugin.log("Couldn't use WorldList from config.yml, creating: " + plugin.enabledWorlds.toString(), 1);
+            }
+        }
+    }
+    
+    List<World> toWorldList(List<String> NameList) {
+        List<World> worlds = new ArrayList();
+        for(int x = 0; x < NameList.size(); x++) {
+            World w = plugin.getServer().getWorld(NameList.get(x));
+            if(w.getEnvironment().getId() == 0)
+                worlds.add(w);
+        }
+        return worlds;
+    }
+    
+    List<String> toStringList(List<World> worldList) {
+        List<String> names = new ArrayList();
+        for(int x = 0; x < worldList.size(); x++)
+            if(worldList.get(x).getEnvironment().getId() == 0)
+                names.add(worldList.get(x).getName());
+        return names;
     }
 }
