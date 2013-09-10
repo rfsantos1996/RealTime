@@ -20,11 +20,20 @@ config:
   # Mode 1 for +18 TPS servers, or it'll change the time
   ModeBeingUsed: 0
   
+  # This will decide if the plugin will automaticly enable when loading
+  # You can manually enable/disable using "/realtime start/stop"
+  enableOnLoad: true
+  
+  # This will enable/disable the permissions - even for OPs
+  # - This DONT APPLY for realtime.start/stop/reload! -
+  permissionEnabled: false
+  
   # This will fix your time in case your server is on another country, for example
   # Like, your city is 8pm, and your server is 9pm, you add 1000 to this and it'll be fixed once you restart
   timeFixInTicks: 0
   
   # The list of NORMAL worlds (NO NETHER OR THE END AVALIABLE)
+  # - THE WORLD LIST IS CASE SENSITIVE! -
   worldList:
   - world
 

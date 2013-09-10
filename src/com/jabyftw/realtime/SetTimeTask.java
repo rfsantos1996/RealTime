@@ -41,7 +41,7 @@ public class SetTimeTask implements Runnable {
                         plugin.mcTime = 1; // This will fix when its 6am and appear as servertime instead of playertime
                     for(World w : plugin.enabledWorlds)
                         for(Player p : w.getPlayers()) {
-                          if(p.hasPermission("realtime.noptime")) {
+                          if(plugin.checkPerm(p, "realtime.noptime")) {
                                 plugin.log("NORMAL : Player have noptime - " + p.getName(), 2);
                                 return;
                             }
@@ -85,7 +85,7 @@ public class SetTimeTask implements Runnable {
                         plugin.mcTime = 1; // This will fix when its 6am and appear as servertime instead of playertime
                     for(World w : plugin.enabledWorlds)
                         for(Player p : w.getPlayers()) {
-                            if(p.hasPermission("realtime.noptime")) {
+                            if(plugin.checkPerm(p, "realtime.noptime")) {
                                 plugin.log("MODE36 : Player have noptime - " + p.getName(), 2);
                                 return;
                             }

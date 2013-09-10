@@ -7,11 +7,17 @@ import java.util.List;
 import java.util.logging.Level;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
+
 public class RealTime extends JavaPlugin {
+    boolean started = false;
+    boolean autoEnable;
+    
     boolean usePlayerTime;
+    boolean usePermissions;
     boolean usePVPTime;
     boolean useDebugMode;
     boolean useDebugTime;
@@ -34,7 +40,6 @@ public class RealTime extends JavaPlugin {
     @Override
     public void onEnable() {
         setConfig();
-        BukkitScheduler sche = getServer().getScheduler();        
         try {
             Metrics metrics = new Metrics(this);
             metrics.start();
@@ -43,21 +48,22 @@ public class RealTime extends JavaPlugin {
             log("Couldn't connect to Metrics.org: " + e, 1);
         }
         
-        if(useMode == 0) {
-            sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), 10, M0CalcDelay);
-            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 0), 20, M0UpdateDelay);
-            log("NORMAL Mode (zero) running.", 0);
-        } else if(useMode == 1) {
-            sche.scheduleAsyncDelayedTask(this, new CalculateTask(this));
-            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 1), 20, M1UpdateDelay * 72);
-            log("Mode 3.6 (one) running.", 0);
-        } else {
-            log("You can only set mode 0 or 1.", 1);
-        }
+        if(autoEnable)
+            if(!started)
+                startTasks();
+        else
+            log("RealTime ISNT running! Use: /realtime start", 1);
     }
     
     @Override
-    public void onDisable() {}
+    public void onDisable() {
+        if(started) {
+            getServer().getScheduler().cancelTasks(this);
+            log("Closed tasks.", 0);
+        } else {
+            log("RealTime wasn't running!", 1);
+        }
+    }
     
     void setConfig() {
         getDataFolder().mkdir();
@@ -70,6 +76,8 @@ public class RealTime extends JavaPlugin {
         
         usePlayerTime = config.getBoolean("config.usePlayerTime");
         useMode = config.getInt("config.ModeBeingUsed");
+        autoEnable = config.getBoolean("config.enableOnLoad");
+        usePermissions = config.getBoolean("config.permissionEnabled");
         timeFix = config.getInt("config.timeFixInTicks");
         enabledWorlds = toWorldList(config.getStringList("config.worldList"));
         
@@ -103,6 +111,24 @@ public class RealTime extends JavaPlugin {
         log("Configured.", 0);
     }
     
+    public void startTasks() {
+        BukkitScheduler sche = getServer().getScheduler();
+        if(useMode == 0) {
+            sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), 10, M0CalcDelay);
+            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 0), 20, M0UpdateDelay);
+            started = true;
+            log("NORMAL Mode (zero) is now running.", 0);
+        } else if(useMode == 1) {
+            sche.scheduleAsyncDelayedTask(this, new CalculateTask(this));
+            sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 1), 20, M1UpdateDelay * 72);
+            started = true;
+            log("3.6 Mode (one) is now running.", 0);
+        } else {
+            log("You can only set mode 0 or 1.", 1);
+            started = false;
+        }
+    }
+    
         /*
          * 0 - normal
          * 1 - warning
@@ -117,6 +143,13 @@ public class RealTime extends JavaPlugin {
             if(useDebugMode)
                 getLogger().log(Level.INFO, "Debug: " + msg);
         }
+    }
+    
+    public boolean checkPerm(Player p, String perm) {
+        if(usePermissions)
+            if(p.hasPermission(perm))
+                return true;
+        return false;
     }
     
     public int getTimeSec(String time) {
@@ -147,7 +180,6 @@ public class RealTime extends JavaPlugin {
         return names;
     }
 }
-
 class CalculateTask implements Runnable {
     private RealTime plugin;
     public CalculateTask(RealTime plugin) {

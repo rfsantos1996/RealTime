@@ -7,3 +7,12 @@ permissions:
   realtime.noptime:
     description: 'People wont have their player times changed'
     default: op
+  realtime.start:
+    description: 'They can do /realtime start'
+    default: op
+  realtime.stop:
+    description: 'They can do /realtime stop'
+    default: op
+  realtime.reload:
+    description: 'They can do /realtime reload'
+    default: op
