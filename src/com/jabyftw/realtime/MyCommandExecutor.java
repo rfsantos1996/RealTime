@@ -15,7 +15,8 @@ public class MyCommandExecutor implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(args.length != 1) {
-            return false;
+            sender.sendMessage(ChatColor.RED + "RealTime " + ChatColor.DARK_RED + "v" + plugin.getDescription().getVersion());
+            return true;
         }
         
         if(args[0].equalsIgnoreCase("stop")) {
