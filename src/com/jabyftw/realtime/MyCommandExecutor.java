@@ -12,8 +12,9 @@ public class MyCommandExecutor implements CommandExecutor {
         this.plugin = plugin;
     }
     
+    @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(command.getName().equalsIgnoreCase("realtime")) {
+        //if(command.getName().equalsIgnoreCase("realtime")) {
             if(args.length != 1) {
                 return false;
             }
@@ -61,8 +62,9 @@ public class MyCommandExecutor implements CommandExecutor {
                 sender.sendMessage(ChatColor.RED + "You dont have 'realtime.reload'!");
                 return false;
             }
-        }
-        return false;
+     /*   }
+        return false;*/
+            return false;
     }
     
 }

@@ -47,7 +47,11 @@ public class RealTime extends JavaPlugin {
             log("Couldn't connect to Metrics.org: " + e, 1);
         }
         
-        getCommand("realtime").setExecutor(new MyCommandExecutor(this)); // i'm dumb
+        try {
+            getCommand("realtime").setExecutor(new MyCommandExecutor(this));
+        } catch (NullPointerException e) {
+            log("/realtime command isnt ready yet: " + e, 1);
+        }
         
         if(autoEnable) {
             if(!started)
