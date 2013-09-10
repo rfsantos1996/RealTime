@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import org.bukkit.World;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -46,12 +47,7 @@ public class RealTime extends JavaPlugin {
         } catch (IOException e) {
             log("Couldn't connect to Metrics.org: " + e, 1);
         }
-        
-        try {
-            getCommand("realtime").setExecutor(new MyCommandExecutor(this));
-        } catch (NullPointerException e) {
-            log("/realtime command isnt ready yet: " + e, 1);
-        }
+        getCommand("realtime").setExecutor(new MyCommandExecutor(this));
         
         if(autoEnable) {
             if(!started)

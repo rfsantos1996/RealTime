@@ -52,7 +52,8 @@ public class MyCommandExecutor implements CommandExecutor {
             
             if(args[0].equalsIgnoreCase("reload")) {
                 if(sender.hasPermission("realtime.reload")) {
-                    plugin.getServer().getScheduler().cancelTasks(plugin);
+                    if(plugin.started)
+                        plugin.getServer().getScheduler().cancelTasks(plugin);
                     plugin.started = false;
                     
                     plugin.setConfig();
