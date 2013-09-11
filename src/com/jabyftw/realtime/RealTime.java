@@ -1,5 +1,6 @@
 package com.jabyftw.realtime;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,12 +13,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
 public class RealTime extends JavaPlugin {
+    private NewConfig nConfig;
+    private File folder = new File("plugins" + File.separator + "RealTime");
+    
     boolean started = false;
     boolean autoEnable;
-    
     boolean usePlayerTime;
     boolean usePermissions;
-    boolean useSelfFixing;
     boolean usePVPTime;
     boolean useDebugMode;
     boolean useDebugTime;
@@ -33,12 +35,18 @@ public class RealTime extends JavaPlugin {
     int debugMin;
     int debugSec;
     int mcTime;
+    double version;
     
     List<String> worldList;
     List<World> enabledWorlds;
     
     @Override
     public void onEnable() {
+        version = 1.4;
+        folder.mkdirs();
+        nConfig = new NewConfig(this);
+        nConfig.createConfig();
+        
         setConfig();
         try {
             Metrics metrics = new Metrics(this);
@@ -70,30 +78,36 @@ public class RealTime extends JavaPlugin {
     }
     
     void setConfig() {
-        getDataFolder().mkdir();
-        saveDefaultConfig();
+        boolean recreated = false;
+        if(getConfig().getDouble("DoNotChangeOrItWillEraseYourConfig.version") != version) {
+            nConfig.deleteConfig();
+            folder.delete();
+            log("Recreating config for new version: " + version, 1);
+            folder.mkdirs();
+            nConfig = new NewConfig(this);
+            nConfig.createConfig();
+            recreated = true;
+            reloadConfig();
+        }
         FileConfiguration config = getConfig();
         
         M0CalcDelay = config.getInt("config.modeZero.CalcDelayInTicks");
         M0UpdateDelay = config.getInt("config.modeZero.UpdateDelayInTicks");
         M1UpdateDelay = config.getInt("config.modeOne.UpdateDelayIn3dot6Seconds");
-        
         usePlayerTime = config.getBoolean("config.usePlayerTime");
         useMode = config.getInt("config.ModeBeingUsed");
         autoEnable = config.getBoolean("config.enableOnLoad");
-        usePermissions = config.getBoolean("config.permissionEnabled");
-        useSelfFixing = config.getBoolean("config.enableSelfFixing");
+        usePermissions = config.getBoolean("config.permissionActionsInGameEnabled");
         timeFix = config.getInt("config.timeFixInTicks");
-        
         usePVPTime = config.getBoolean("PVPTime.enabled");
         pvpStart = config.getInt("PVPTime.startTime");
         pvpEnd = config.getInt("PVPTime.endTime");
-        
         useDebugMode = config.getBoolean("debug.useDebugMode");
         useDebugTime = config.getBoolean("debug.DebugTime.enabled");
         debugHour = config.getInt("debug.DebugTime.hour");
         debugMin = config.getInt("debug.DebugTime.min");
         debugSec = config.getInt("debug.DebugTime.sec");
+        log("Mode/PlayerTime/PVPTime+pvpStart : " + useMode + "/" + usePlayerTime + "/" + usePVPTime + pvpStart, 2);
         
         if(usePlayerTime && usePVPTime) {
             log("Can't use PlayerTime + PVPTime", 1);
@@ -111,11 +125,13 @@ public class RealTime extends JavaPlugin {
             timeFix = timeFix + 24000; // -2.000+24.000 = 22.000
             log("You cant set the timeFix to negative values. Setting into positive ones!", 1);
         }
-            
+        if(recreated)
+            log("Recreated config for v" + config.getDouble("DoNotChangeOrItWillEraseYourConfig.version"), 1);
+        
         log("Configured.", 0);
     }
     
-    public void startTasks() {
+    void startTasks() {
         BukkitScheduler sche = getServer().getScheduler();
         if(useMode == 0) {
             sche.scheduleSyncDelayedTask(this, new EnableWorldsTask(this), 20);
@@ -140,7 +156,7 @@ public class RealTime extends JavaPlugin {
          * 1 - warning
          * 2 - debug
          */
-    public void log(String msg, int mode) {
+    void log(String msg, int mode) {
         if(mode == 0) // NORMAL
             getLogger().log(Level.INFO, msg);
         else if(mode == 1) // WARNING
@@ -151,14 +167,14 @@ public class RealTime extends JavaPlugin {
         }
     }
     
-    public boolean checkPerm(Player p, String perm) {
+    boolean checkPerm(Player p, String perm) {
         if(usePermissions)
             if(p.hasPermission(perm))
                 return true;
         return false;
     }
     
-    public int getTimeSec(String time) {
+    int getTimeSec(String time) {
         int hour = Integer.parseInt(time.substring(0, 2));
         int min = Integer.parseInt(time.substring(3, 5));
         int sec = Integer.parseInt(time.substring(6, 8));
@@ -202,13 +218,7 @@ class EnableWorldsTask implements Runnable {
             plugin.log("Loaded WorldList: " + plugin.enabledWorlds.toString(), 0);
         } catch(NullPointerException e) {
             plugin.enabledWorlds = toWorldList(toStringList(plugin.getServer().getWorlds())); // I know, its ugly...
-            if(plugin.useSelfFixing) {
-                plugin.log("Couldn't use WorldList from config.yml, creating AND SAVING: " + plugin.enabledWorlds.toString(), 1);
-                plugin.getConfig().set("config.worldList", toStringList(plugin.enabledWorlds));
-                plugin.saveConfig();
-            } else {
-                plugin.log("Couldn't use WorldList from config.yml, creating: " + plugin.enabledWorlds.toString(), 1);
-            }
+            plugin.log("Couldn't use WorldList from config.yml, using: " + plugin.enabledWorlds.toString(), 1);
         }
     }
     
