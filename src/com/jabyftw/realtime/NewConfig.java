@@ -96,7 +96,7 @@ public class NewConfig {
             w(w, "    sec: 0");
             w(w, "\n");
             w(w, "DoNotChangeOrItWillEraseYourConfig:");
-            w(w, "  version: " + plugin.getDescription().getVersion());
+            w(w, "  configVersion: " + plugin.cVersion);
             w.close();
             reloadConfig();
         } catch (IOException e) {

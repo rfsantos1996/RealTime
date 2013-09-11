@@ -13,6 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
 public class RealTime extends JavaPlugin {
+    int cVersion = 1;
     private NewConfig nConfig;
     private File folder = new File("plugins" + File.separator + "RealTime");
     
@@ -35,14 +36,12 @@ public class RealTime extends JavaPlugin {
     int debugMin;
     int debugSec;
     int mcTime;
-    double version;
     
     List<String> worldList;
     List<World> enabledWorlds;
     
     @Override
     public void onEnable() {
-        version = 1.4;
         folder.mkdirs();
         nConfig = new NewConfig(this);
         nConfig.createConfig();
@@ -79,10 +78,10 @@ public class RealTime extends JavaPlugin {
     
     void setConfig() {
         boolean recreated = false;
-        if(getConfig().getDouble("DoNotChangeOrItWillEraseYourConfig.version") != version) {
+        if(getConfig().getInt("DoNotChangeOrItWillEraseYourConfig.configVersion") != cVersion) {
             nConfig.deleteConfig();
             folder.delete();
-            log("Recreating config for new version: " + version, 1);
+            log("Recreating config for new version: " + cVersion, 1);
             folder.mkdirs();
             nConfig = new NewConfig(this);
             nConfig.createConfig();
@@ -126,7 +125,7 @@ public class RealTime extends JavaPlugin {
             log("You cant set the timeFix to negative values. Setting into positive ones!", 1);
         }
         if(recreated)
-            log("Recreated config for v" + config.getDouble("DoNotChangeOrItWillEraseYourConfig.version"), 1);
+            log("Recreated config for v" + config.getDouble("DoNotChangeOrItWillEraseYourConfig.configVersion"), 1);
         
         log("Configured.", 0);
     }
