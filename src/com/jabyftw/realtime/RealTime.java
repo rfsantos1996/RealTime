@@ -125,7 +125,7 @@ public class RealTime extends JavaPlugin {
             log("You cant set the timeFix to negative values. Setting into positive ones!", 1);
         }
         if(recreated)
-            log("Recreated config for v" + config.getDouble("DoNotChangeOrItWillEraseYourConfig.configVersion"), 1);
+            log("Recreated config for v" + config.getInt("DoNotChangeOrItWillEraseYourConfig.configVersion"), 1);
         
         log("Configured.", 0);
     }
@@ -216,7 +216,7 @@ class EnableWorldsTask implements Runnable {
             plugin.enabledWorlds = toWorldList(plugin.getConfig().getStringList("config.worldList"));
             plugin.log("Loaded WorldList: " + plugin.enabledWorlds.toString(), 0);
         } catch(NullPointerException e) {
-            plugin.enabledWorlds = toWorldList(toStringList(plugin.getServer().getWorlds())); // I know, its ugly...
+            plugin.enabledWorlds = toWorldList(toStringList(plugin.getServer().getWorlds())); // I know, its ugly... But this will allow only NORMAL (not nether or the end) maps
             plugin.log("Couldn't use WorldList from config.yml, using: " + plugin.enabledWorlds.toString(), 1);
         }
     }
