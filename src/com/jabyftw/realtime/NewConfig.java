@@ -12,16 +12,17 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class NewConfig {
-    RealTime plugin;
+
+    private final RealTime plugin;
     public FileConfiguration ConfigConfiguration;
     public File ConfigFile;
-    
+
     public NewConfig(RealTime plugin) {
         this.plugin = plugin;
         ConfigFile = new File(plugin.getDataFolder(), "config.yml");
         ConfigConfiguration = YamlConfiguration.loadConfiguration(ConfigFile);
     }
-    
+
     public void createConfig() {
         ConfigFile = new File(plugin.getDataFolder(), "config.yml");
         if (!ConfigFile.exists()) {
@@ -33,14 +34,14 @@ public class NewConfig {
             }
         }
     }
-    
+
     public void deleteConfig() {
         ConfigFile = new File(plugin.getDataFolder(), "config.yml");
-        if(ConfigFile.exists()) {
+        if (ConfigFile.exists()) {
             ConfigFile.delete();
         }
     }
-    
+
     public void generateConfig() {
         try {
             File configFile = new File(plugin.getDataFolder(), "config.yml");
@@ -103,36 +104,36 @@ public class NewConfig {
             plugin.log("Could not generate the config file: " + e, 1);
         }
     }
-    
+
     private void w(FileWriter writer, String string) throws IOException {
         writer.write(string + "\n");
     }
-    
+
     public void reloadConfig() {
         if (!ConfigFile.exists()) {
             ConfigFile = new File(plugin.getDataFolder(), "config.yml");
         }
         ConfigConfiguration = YamlConfiguration.loadConfiguration(ConfigFile);
-        
+
         InputStream defConfigStream = plugin.getResource("config.yml");
         if (defConfigStream != null) {
             YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
             ConfigConfiguration.setDefaults(defConfig);
         }
     }
-    
+
     public FileConfiguration getConfig() {
         if (ConfigConfiguration == null) {
             reloadConfig();
         }
         return ConfigConfiguration;
     }
-    
+
     public void saveConfig() {
         if (ConfigConfiguration == null || ConfigFile == null) {
             return;
         }
-        
+
         try {
             ConfigConfiguration.save(ConfigFile);
         } catch (IOException e) {
