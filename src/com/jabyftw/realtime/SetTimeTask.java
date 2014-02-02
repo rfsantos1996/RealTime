@@ -5,8 +5,8 @@ import org.bukkit.entity.Player;
 
 public class SetTimeTask implements Runnable {
 
-    private RealTime plugin;
-    private int mode;
+    private final RealTime plugin;
+    private final int mode;
 
     public SetTimeTask(RealTime plugin, int mode) {
         this.plugin = plugin;
@@ -48,12 +48,12 @@ public class SetTimeTask implements Runnable {
                     }
                     for (World w : plugin.enabledWorlds) {
                         for (Player p : w.getPlayers()) {
-                            if (plugin.checkPerm(p, "realtime.noptime")) {
+                            if (p.hasPermission("realtime.noptime")) {
                                 plugin.log("NORMAL : Player have noptime - " + p.getName(), 2);
-                                return;
+                            } else {
+                                p.setPlayerTime(plugin.mcTime, false);
+                                plugin.log("NORMAL : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
                             }
-                            p.setPlayerTime(plugin.mcTime, false);
-                            plugin.log("NORMAL : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
                         }
                     }
                 } else {
@@ -101,12 +101,12 @@ public class SetTimeTask implements Runnable {
                     }
                     for (World w : plugin.enabledWorlds) {
                         for (Player p : w.getPlayers()) {
-                            if (plugin.checkPerm(p, "realtime.noptime")) {
+                            if (p.hasPermission("realtime.noptime")) {
                                 plugin.log("MODE36 : Player have noptime - " + p.getName(), 2);
-                                return;
+                            } else {
+                                p.setPlayerTime(plugin.mcTime, false);
+                                plugin.log("MODE36 : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
                             }
-                            p.setPlayerTime(plugin.mcTime, false);
-                            plugin.log("MODE36 : PlayerTime : time - " + p.getName() + " | " + plugin.mcTime, 2);
                         }
                     }
                 } else {

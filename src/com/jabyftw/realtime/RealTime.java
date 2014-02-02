@@ -8,21 +8,20 @@ import java.util.List;
 import java.util.logging.Level;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.mcstats.MetricsLite;
 
 public class RealTime extends JavaPlugin {
 
-    int cVersion = 1;
     private NewConfig nConfig;
     private final File folder = new File("plugins" + File.separator + "RealTime");
-    FileConfiguration config;
+    private FileConfiguration config;
 
-    boolean started = false, autoEnable, usePlayerTime, usePermissions, usePVPTime, useDebugMode, useDebugTime;
-    int useMode, timeFix, M0calcDelay, M0UpdateDelay, M0CalcDelay, M1UpdateDelay, pvpStart, pvpEnd, debugHour, debugMin, debugSec, mcTime;
+    public boolean started = false, autoEnable, usePlayerTime, usePermissions, usePVPTime, useDebugMode, useDebugTime;
+    public int useMode, timeFix, M0calcDelay, M0UpdateDelay, M0CalcDelay, M1UpdateDelay, pvpStart, pvpEnd, debugHour, debugMin, debugSec, mcTime, cVersion = 1;
 
-    List<String> worldList = new ArrayList();
+    private List<String> worldList = new ArrayList();
     List<World> enabledWorlds = new ArrayList();
 
     @Override
@@ -30,17 +29,15 @@ public class RealTime extends JavaPlugin {
         folder.mkdirs();
         nConfig = new NewConfig(this);
         nConfig.createConfig();
-
         setConfig();
         try {
-            Metrics metrics = new Metrics(this);
+            MetricsLite metrics = new MetricsLite(this);
             metrics.start();
             log("Metrics started.", 0);
         } catch (IOException e) {
             log("Couldn't connect to Metrics.org: " + e, 1);
         }
         getCommand("realtime").setExecutor(new MyCommandExecutor(this));
-
         if (autoEnable) {
             if (!started) {
                 startTasks();
@@ -62,7 +59,7 @@ public class RealTime extends JavaPlugin {
         }
     }
 
-    void setConfig() {
+    public void setConfig() {
         if (getConfig().getInt("DoNotChangeOrItWillEraseYourConfig.configVersion") != cVersion) {
             nConfig.deleteConfig();
             folder.delete();
@@ -73,7 +70,6 @@ public class RealTime extends JavaPlugin {
             reloadConfig();
         }
         config = getConfig();
-
         M0CalcDelay = config.getInt("config.modeZero.CalcDelayInTicks");
         M0UpdateDelay = config.getInt("config.modeZero.UpdateDelayInTicks");
         M1UpdateDelay = config.getInt("config.modeOne.UpdateDelayIn3dot6Seconds");
@@ -114,16 +110,21 @@ public class RealTime extends JavaPlugin {
         log("Configured.", 0);
     }
 
-    void startTasks() {
+    public void startTasks() {
         BukkitScheduler sche = getServer().getScheduler();
+        try {
+            enabledWorlds = toWorldList(getConfig().getStringList("config.worldList"));
+            log("Loaded WorldList: " + enabledWorlds.toString(), 0);
+        } catch (NullPointerException e) {
+            enabledWorlds = getServer().getWorlds(); // i was retarded
+            log("Couldn't use WorldList from config.yml, using: " + enabledWorlds.toString(), 1);
+        }
         if (useMode == 0) {
-            sche.scheduleSyncDelayedTask(this, new EnableWorldsTask(this), 20);
             sche.scheduleAsyncRepeatingTask(this, new CalculateTask(this), 40, M0CalcDelay);
             sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 0), 45, M0UpdateDelay);
             started = true;
             log("NORMAL Mode (zero) is now running.", 0);
         } else if (useMode == 1) {
-            sche.scheduleSyncDelayedTask(this, new EnableWorldsTask(this), 20);
             sche.scheduleAsyncDelayedTask(this, new CalculateTask(this), 40);
             sche.scheduleSyncRepeatingTask(this, new SetTimeTask(this, 1), 45, M1UpdateDelay * 72);
             started = true;
@@ -134,30 +135,35 @@ public class RealTime extends JavaPlugin {
         }
     }
 
+    private List<World> toWorldList(List<String> NameList) {
+        List<World> worlds = new ArrayList();
+        for (int x = 0; x < NameList.size(); x++) {
+            World w = getServer().getWorld(NameList.get(x));
+            if (w.getEnvironment().getId() == 0) {
+                worlds.add(w);
+            }
+        }
+        return worlds;
+    }
+
     /*
      * 0 - normal
      * 1 - warning
      * 2 - debug
      */
     void log(String msg, int mode) {
-        if (mode == 0) {// NORMAL
-            getLogger().log(Level.INFO, msg);
-        } else if (mode == 1) { // WARNING
-            getLogger().log(Level.WARNING, msg);
-        } else if (mode == 2) { // DEBUG
-            if (useDebugMode) {
-                getLogger().log(Level.INFO, "Debug: " + msg);
-            }
+        switch (mode) {
+            case 0:
+                getLogger().log(Level.INFO, msg);
+                break;
+            case 1:
+                getLogger().log(Level.WARNING, msg);
+                break;
+            default:
+                if (useDebugMode) {
+                    getLogger().log(Level.INFO, "Debug: " + msg);
+                }
         }
-    }
-
-    boolean checkPerm(Player p, String perm) {
-        if (usePermissions) {
-            if (p.hasPermission(perm)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     int getTimeSec(String time) {
@@ -190,46 +196,5 @@ class CalculateTask implements Runnable {
             plugin.mcTime = (int) ((timeInSec - 6000) + plugin.timeFix);
         }
         plugin.log("mcTime: " + plugin.mcTime, 2);
-    }
-}
-
-class EnableWorldsTask implements Runnable {
-
-    private final RealTime plugin;
-
-    public EnableWorldsTask(RealTime plugin) {
-        this.plugin = plugin;
-    }
-
-    @Override
-    public void run() {
-        try {
-            plugin.enabledWorlds = toWorldList(plugin.getConfig().getStringList("config.worldList"));
-            plugin.log("Loaded WorldList: " + plugin.enabledWorlds.toString(), 0);
-        } catch (NullPointerException e) {
-            plugin.enabledWorlds = toWorldList(toStringList(plugin.getServer().getWorlds())); // I know, its ugly... But this will allow only NORMAL (not nether or the end) maps
-            plugin.log("Couldn't use WorldList from config.yml, using: " + plugin.enabledWorlds.toString(), 1);
-        }
-    }
-
-    List<World> toWorldList(List<String> NameList) {
-        List<World> worlds = new ArrayList();
-        for (int x = 0; x < NameList.size(); x++) {
-            World w = plugin.getServer().getWorld(NameList.get(x));
-            if (w.getEnvironment().getId() == 0) {
-                worlds.add(w);
-            }
-        }
-        return worlds;
-    }
-
-    List<String> toStringList(List<World> worldList) {
-        List<String> names = new ArrayList();
-        for (int x = 0; x < worldList.size(); x++) {
-            if (worldList.get(x).getEnvironment().getId() == 0) {
-                names.add(worldList.get(x).getName());
-            }
-        }
-        return names;
     }
 }

@@ -14,8 +14,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public class NewConfig {
 
     private final RealTime plugin;
-    public FileConfiguration ConfigConfiguration;
-    public File ConfigFile;
+    private FileConfiguration ConfigConfiguration;
+    private File ConfigFile;
 
     public NewConfig(RealTime plugin) {
         this.plugin = plugin;
@@ -101,7 +101,8 @@ public class NewConfig {
             w.close();
             reloadConfig();
         } catch (IOException e) {
-            plugin.log("Could not generate the config file: " + e, 1);
+            plugin.log("Could not generate the config file.", 1);
+            e.printStackTrace();
         }
     }
 
@@ -131,9 +132,8 @@ public class NewConfig {
 
     public void saveConfig() {
         if (ConfigConfiguration == null || ConfigFile == null) {
-            return;
+            reloadConfig();
         }
-
         try {
             ConfigConfiguration.save(ConfigFile);
         } catch (IOException e) {
